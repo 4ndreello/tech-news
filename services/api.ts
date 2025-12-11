@@ -1,6 +1,8 @@
-import { NewsItem, Comment, ServicesStatusResponse } from '../types';
+import { NewsItem, Comment, ServicesStatusResponse } from "../types";
 
-const API_BASE_URL = process.env.VITE_API_URL || 'http://localhost:8080/api';
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:8080/api";
+console.log(API_BASE_URL);
 const CACHE_DURATION = 3 * 60 * 1000; // 3 minutos em ms
 
 interface CacheEntry<T> {
@@ -37,7 +39,7 @@ const setCachedData = <T>(key: string, data: T): void => {
 };
 
 export const fetchTabNews = async (): Promise<NewsItem[]> => {
-  const cacheKey = 'tabnews';
+  const cacheKey = "tabnews";
 
   // Verificar cache
   const cached = getCachedData<NewsItem[]>(cacheKey);
@@ -52,8 +54,10 @@ export const fetchTabNews = async (): Promise<NewsItem[]> => {
     try {
       const res = await fetch(`${API_BASE_URL}/news/tabnews`);
       if (!res.ok) {
-        const error = await res.json().catch(() => ({ error: 'Falha ao carregar TabNews' }));
-        throw new Error(error.error || 'Falha ao carregar TabNews');
+        const error = await res
+          .json()
+          .catch(() => ({ error: "Falha ao carregar TabNews" }));
+        throw new Error(error.error || "Falha ao carregar TabNews");
       }
       const data = await res.json();
       setCachedData(cacheKey, data);
@@ -68,7 +72,7 @@ export const fetchTabNews = async (): Promise<NewsItem[]> => {
 };
 
 export const fetchHackerNews = async (): Promise<NewsItem[]> => {
-  const cacheKey = 'hackernews';
+  const cacheKey = "hackernews";
 
   const cached = getCachedData<NewsItem[]>(cacheKey);
   if (cached) return cached;
@@ -80,8 +84,10 @@ export const fetchHackerNews = async (): Promise<NewsItem[]> => {
     try {
       const res = await fetch(`${API_BASE_URL}/news/hackernews`);
       if (!res.ok) {
-        const error = await res.json().catch(() => ({ error: 'Falha ao carregar Hacker News' }));
-        throw new Error(error.error || 'Falha ao carregar Hacker News');
+        const error = await res
+          .json()
+          .catch(() => ({ error: "Falha ao carregar Hacker News" }));
+        throw new Error(error.error || "Falha ao carregar Hacker News");
       }
       const data = await res.json();
       setCachedData(cacheKey, data);
@@ -96,7 +102,7 @@ export const fetchHackerNews = async (): Promise<NewsItem[]> => {
 };
 
 export const fetchSmartMix = async (): Promise<NewsItem[]> => {
-  const cacheKey = 'mix';
+  const cacheKey = "mix";
 
   const cached = getCachedData<NewsItem[]>(cacheKey);
   if (cached) return cached;
@@ -108,8 +114,10 @@ export const fetchSmartMix = async (): Promise<NewsItem[]> => {
     try {
       const res = await fetch(`${API_BASE_URL}/news/mix`);
       if (!res.ok) {
-        const error = await res.json().catch(() => ({ error: 'Falha ao carregar notícias' }));
-        throw new Error(error.error || 'Falha ao carregar notícias');
+        const error = await res
+          .json()
+          .catch(() => ({ error: "Falha ao carregar notícias" }));
+        throw new Error(error.error || "Falha ao carregar notícias");
       }
       const data = await res.json();
       setCachedData(cacheKey, data);
@@ -123,7 +131,10 @@ export const fetchSmartMix = async (): Promise<NewsItem[]> => {
   return request;
 };
 
-export const fetchTabNewsComments = async (username: string, slug: string): Promise<Comment[]> => {
+export const fetchTabNewsComments = async (
+  username: string,
+  slug: string
+): Promise<Comment[]> => {
   const cacheKey = `comments-${username}-${slug}`;
 
   const cached = getCachedData<Comment[]>(cacheKey);
@@ -136,8 +147,10 @@ export const fetchTabNewsComments = async (username: string, slug: string): Prom
     try {
       const res = await fetch(`${API_BASE_URL}/comments/${username}/${slug}`);
       if (!res.ok) {
-        const error = await res.json().catch(() => ({ error: 'Falha ao carregar comentários' }));
-        throw new Error(error.error || 'Falha ao carregar comentários');
+        const error = await res
+          .json()
+          .catch(() => ({ error: "Falha ao carregar comentários" }));
+        throw new Error(error.error || "Falha ao carregar comentários");
       }
       const data = await res.json();
       setCachedData(cacheKey, data);
@@ -151,7 +164,7 @@ export const fetchTabNewsComments = async (username: string, slug: string): Prom
   return request;
 };
 export const fetchServiceStatus = async (): Promise<ServicesStatusResponse> => {
-  const cacheKey = 'service-status';
+  const cacheKey = "service-status";
 
   const cached = getCachedData<ServicesStatusResponse>(cacheKey);
   if (cached) return cached;
@@ -163,7 +176,7 @@ export const fetchServiceStatus = async (): Promise<ServicesStatusResponse> => {
     try {
       const res = await fetch(`${API_BASE_URL}/services/status`);
       if (!res.ok) {
-        throw new Error('Falha ao carregar status dos serviços');
+        throw new Error("Falha ao carregar status dos serviços");
       }
       const data = await res.json();
       setCachedData(cacheKey, data);

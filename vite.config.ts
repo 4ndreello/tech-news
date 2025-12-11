@@ -10,9 +10,7 @@ export default defineConfig(({ mode }) => {
       host: "0.0.0.0",
     },
     plugins: [react()],
-    define: {
-      "process.env.VITE_API_URL": JSON.stringify(env.VITE_API_URL),
-    },
+
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "."),

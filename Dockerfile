@@ -24,9 +24,6 @@ FROM nginx:alpine
 # Copia os arquivos buildados do stage anterior
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copia a configuração customizada do nginx
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
 # Expõe a porta 8080 (padrão do GCP Cloud Run)
 EXPOSE 8080
 
