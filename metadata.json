@@ -1,0 +1,5 @@
+{
+  "name": "TechNews",
+  "description": "A modern, minimalist tech news aggregator combining TabNews and Hacker News with a smart curation algorithm.",
+  "requestFramePermissions": []
+}
