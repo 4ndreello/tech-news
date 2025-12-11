@@ -13,10 +13,8 @@ RUN npm ci --only=production=false
 # Copia o restante dos arquivos
 COPY . .
 
-# Build da aplicação
-# As variáveis de ambiente serão injetadas em tempo de build
-ARG GEMINI_API_KEY
-ENV GEMINI_API_KEY=$GEMINI_API_KEY
+# Copia .env.production para .env
+RUN cp .env.production .env
 
 RUN npm run build
 

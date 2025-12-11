@@ -1,6 +1,6 @@
 import { NewsItem, Comment, ServicesStatusResponse } from '../types';
 
-const API_BASE_URL = 'http://localhost:8080/api';
+const API_BASE_URL = process.env.VITE_API_URL || 'http://localhost:8080/api';
 const CACHE_DURATION = 3 * 60 * 1000; // 3 minutos em ms
 
 interface CacheEntry<T> {
