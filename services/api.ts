@@ -1,163 +1,178 @@
-import { NewsItem, Source, TabNewsItem, HackerNewsItem, Comment } from '../types';
+import { NewsItem, Comment, ServicesStatusResponse } from '../types';
 
-const TABNEWS_API = 'https://www.tabnews.com.br/api/v1/contents';
-// Official Firebase API endpoints
-const HN_BASE_URL = 'https://hacker-news.firebaseio.com/v0';
-
-// Cache configuration
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+const API_BASE_URL = 'http://localhost:8080/api';
+const CACHE_DURATION = 3 * 60 * 1000; // 3 minutos em ms
 
 interface CacheEntry<T> {
   data: T;
   timestamp: number;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const cache: Record<string, CacheEntry<any>> = {};
+// Cache em memória
+const cache = new Map<string, CacheEntry<any>>();
 
-const getFromCache = <T>(key: string): T | null => {
-  const entry = cache[key];
+// Controle de requisições em andamento para evitar chamadas duplicadas
+const inflightRequests = new Map<string, Promise<any>>();
+
+const getCachedData = <T>(key: string): T | null => {
+  const entry = cache.get(key);
   if (!entry) return null;
-  
-  const isExpired = Date.now() - entry.timestamp > CACHE_DURATION;
-  if (isExpired) {
-    delete cache[key];
+
+  const now = Date.now();
+  const isStale = now - entry.timestamp > CACHE_DURATION;
+
+  if (isStale) {
+    cache.delete(key);
     return null;
   }
-  
-  return entry.data;
+
+  return entry.data as T;
 };
 
-const setCache = <T>(key: string, data: T) => {
-  cache[key] = {
+const setCachedData = <T>(key: string, data: T): void => {
+  cache.set(key, {
     data,
-    timestamp: Date.now()
-  };
-};
-
-// --- RANKING ALGORITHM ---
-// Updated Formula: (Points + (Comments * 0.5) + 1) / (T + 2)^G
-// Changes:
-// 1. Included Comment Count to measure engagement.
-// 2. Reduced Gravity from 1.8 to 1.4 so time degrades score slower.
-const calculateRank = (item: NewsItem): number => {
-  const points = item.score || 0;
-  const comments = item.commentCount || 0;
-  
-  const date = new Date(item.publishedAt);
-  const now = new Date();
-  
-  // Calculate age in hours
-  const ageInHours = Math.max(0, (now.getTime() - date.getTime()) / (1000 * 60 * 60));
-  const gravity = 1.4; 
-
-  // Weighted Score:
-  // Points (Likes/Coins) count as 1.0
-  // Comments count as 0.5 (Engagement is important, but less than approval)
-  const weightedScore = points + (comments * 0.5);
-
-  // Add 1 to numerator to avoid zero/division issues
-  return (weightedScore + 1) / Math.pow(ageInHours + 2, gravity);
+    timestamp: Date.now(),
+  });
 };
 
 export const fetchTabNews = async (): Promise<NewsItem[]> => {
-  const cached = getFromCache<NewsItem[]>('tabnews');
+  const cacheKey = 'tabnews';
+
+  // Verificar cache
+  const cached = getCachedData<NewsItem[]>(cacheKey);
   if (cached) return cached;
 
-  const res = await fetch(`${TABNEWS_API}?strategy=relevant`);
-  if (!res.ok) throw new Error('Falha ao carregar TabNews');
-  const data: TabNewsItem[] = await res.json();
-  
-  const mapped = data.map(item => ({
-    id: item.id,
-    title: item.title,
-    author: item.owner_username,
-    score: item.tabcoins,
-    publishedAt: item.published_at,
-    source: Source.TabNews,
-    slug: item.slug,
-    owner_username: item.owner_username,
-    body: item.body,
-    sourceUrl: item.source_url,
-    commentCount: item.children_deep_count
-  }));
+  // Verificar se já tem uma requisição em andamento
+  const inflight = inflightRequests.get(cacheKey);
+  if (inflight) return inflight;
 
-  setCache('tabnews', mapped);
-  return mapped;
+  // Criar nova requisição
+  const request = (async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/news/tabnews`);
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({ error: 'Falha ao carregar TabNews' }));
+        throw new Error(error.error || 'Falha ao carregar TabNews');
+      }
+      const data = await res.json();
+      setCachedData(cacheKey, data);
+      return data;
+    } finally {
+      inflightRequests.delete(cacheKey);
+    }
+  })();
+
+  inflightRequests.set(cacheKey, request);
+  return request;
 };
 
 export const fetchHackerNews = async (): Promise<NewsItem[]> => {
-  const cached = getFromCache<NewsItem[]>('hackernews');
+  const cacheKey = 'hackernews';
+
+  const cached = getCachedData<NewsItem[]>(cacheKey);
   if (cached) return cached;
 
-  // 1. Get Top Stories IDs
-  const idsRes = await fetch(`${HN_BASE_URL}/topstories.json`);
-  if (!idsRes.ok) throw new Error('Falha ao carregar IDs do Hacker News');
-  const ids: number[] = await idsRes.json();
+  const inflight = inflightRequests.get(cacheKey);
+  if (inflight) return inflight;
 
-  // 2. Fetch details for top 30 items in parallel
-  const topIds = ids.slice(0, 30); // Fetch a bit more to filter out bad data
-  
-  const itemPromises = topIds.map(id => 
-    fetch(`${HN_BASE_URL}/item/${id}.json`).then(res => res.json())
-  );
+  const request = (async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/news/hackernews`);
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({ error: 'Falha ao carregar Hacker News' }));
+        throw new Error(error.error || 'Falha ao carregar Hacker News');
+      }
+      const data = await res.json();
+      setCachedData(cacheKey, data);
+      return data;
+    } finally {
+      inflightRequests.delete(cacheKey);
+    }
+  })();
 
-  const itemsRaw: HackerNewsItem[] = await Promise.all(itemPromises);
-
-  // 3. Map and Filter
-  const mapped = itemsRaw
-    .filter(item => item && item.title && !item.title.startsWith('[dead]') && !item.title.startsWith('[flagged]'))
-    .map((item) => ({
-      id: String(item.id),
-      title: item.title,
-      author: item.by,
-      score: item.score,
-      publishedAt: new Date(item.time * 1000).toISOString(), // Convert Unix seconds to ISO
-      source: Source.HackerNews,
-      url: item.url || `https://news.ycombinator.com/item?id=${item.id}`,
-      commentCount: item.descendants || 0
-    }));
-
-  setCache('hackernews', mapped);
-  return mapped;
+  inflightRequests.set(cacheKey, request);
+  return request;
 };
 
 export const fetchSmartMix = async (): Promise<NewsItem[]> => {
-  const [tabNewsResults, hnResults] = await Promise.allSettled([
-    fetchTabNews(),
-    fetchHackerNews()
-  ]);
+  const cacheKey = 'mix';
 
-  const tabNews = tabNewsResults.status === 'fulfilled' ? tabNewsResults.value : [];
-  const hn = hnResults.status === 'fulfilled' ? hnResults.value : [];
+  const cached = getCachedData<NewsItem[]>(cacheKey);
+  if (cached) return cached;
 
-  if (tabNewsResults.status === 'rejected' && hnResults.status === 'rejected') {
-    throw new Error('Não foi possível carregar nenhuma fonte de notícias.');
-  }
+  const inflight = inflightRequests.get(cacheKey);
+  if (inflight) return inflight;
 
-  // Apply "Gravity Sort" to both lists individually
-  const sortedTab = [...tabNews].sort((a, b) => calculateRank(b) - calculateRank(a));
-  const sortedHn = [...hn].sort((a, b) => calculateRank(b) - calculateRank(a));
+  const request = (async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/news/mix`);
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({ error: 'Falha ao carregar notícias' }));
+        throw new Error(error.error || 'Falha ao carregar notícias');
+      }
+      const data = await res.json();
+      setCachedData(cacheKey, data);
+      return data;
+    } finally {
+      inflightRequests.delete(cacheKey);
+    }
+  })();
 
-  // Take top 20 from each *after* our custom freshness sorting
-  const topTab = sortedTab.slice(0, 20);
-  const topHn = sortedHn.slice(0, 20);
-
-  const mixed: NewsItem[] = [];
-  const maxLength = Math.max(topTab.length, topHn.length);
-
-  // Interleave the results to ensure diversity
-  for (let i = 0; i < maxLength; i++) {
-    if (i < topTab.length) mixed.push(topTab[i]);
-    if (i < topHn.length) mixed.push(topHn[i]);
-  }
-
-  return mixed;
+  inflightRequests.set(cacheKey, request);
+  return request;
 };
 
-// Fetch comments for a specific TabNews post
 export const fetchTabNewsComments = async (username: string, slug: string): Promise<Comment[]> => {
-  const res = await fetch(`${TABNEWS_API}/${username}/${slug}/children`);
-  if (!res.ok) throw new Error('Falha ao carregar comentários');
-  return await res.json();
+  const cacheKey = `comments-${username}-${slug}`;
+
+  const cached = getCachedData<Comment[]>(cacheKey);
+  if (cached) return cached;
+
+  const inflight = inflightRequests.get(cacheKey);
+  if (inflight) return inflight;
+
+  const request = (async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/comments/${username}/${slug}`);
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({ error: 'Falha ao carregar comentários' }));
+        throw new Error(error.error || 'Falha ao carregar comentários');
+      }
+      const data = await res.json();
+      setCachedData(cacheKey, data);
+      return data;
+    } finally {
+      inflightRequests.delete(cacheKey);
+    }
+  })();
+
+  inflightRequests.set(cacheKey, request);
+  return request;
+};
+export const fetchServiceStatus = async (): Promise<ServicesStatusResponse> => {
+  const cacheKey = 'service-status';
+
+  const cached = getCachedData<ServicesStatusResponse>(cacheKey);
+  if (cached) return cached;
+
+  const inflight = inflightRequests.get(cacheKey);
+  if (inflight) return inflight;
+
+  const request = (async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/services/status`);
+      if (!res.ok) {
+        throw new Error('Falha ao carregar status dos serviços');
+      }
+      const data = await res.json();
+      setCachedData(cacheKey, data);
+      return data;
+    } finally {
+      inflightRequests.delete(cacheKey);
+    }
+  })();
+
+  inflightRequests.set(cacheKey, request);
+  return request;
 };

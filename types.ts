@@ -30,6 +30,25 @@ export interface NewsItem {
 
 export type ViewMode = 'mix' | 'tabnews' | 'hackernews';
 
+// Service Status types
+export enum ServiceStatusType {
+  Operational = 'operational',
+  Degraded = 'degraded',
+  Down = 'down'
+}
+
+export interface ServiceStatus {
+  name: string;
+  status: ServiceStatusType;
+  lastChecked: string; // ISO timestamp
+  url: string; // URL da página de status do serviço
+}
+
+export interface ServicesStatusResponse {
+  services: ServiceStatus[];
+  lastUpdate: string; // ISO timestamp
+}
+
 // API Response types (Simplified)
 export interface TabNewsItem {
   id: string;

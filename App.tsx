@@ -19,11 +19,14 @@ export default function App() {
     let ignore = false;
 
     const fetchData = async () => {
-      setLoading(true);
+      // Only show skeleton on initial load (when there are no items yet)
+      if (items.length === 0) {
+        setLoading(true);
+      }
       setError(null);
-      
+
       let data: NewsItem[] = [];
-      
+
       try {
         switch (view) {
           case 'mix':
@@ -36,7 +39,7 @@ export default function App() {
             data = await fetchHackerNews();
             break;
         }
-        
+
         if (!ignore) {
           setItems(data);
         }
@@ -77,52 +80,42 @@ export default function App() {
       />
 
       {/* Main Content */}
-      <main className="flex-1 w-full max-w-5xl mx-auto p-4 md:p-6 lg:p-8">
-        
-        {/* Context info */}
-        <div className="mb-6 flex items-center gap-2 text-sm text-slate-500 pl-2">
-           <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-           <span>
-              {view === 'mix' && 'Top 20 Curated Stories'}
-              {view === 'tabnews' && 'TabNews Feed'}
-              {view === 'hackernews' && 'Hacker News Feed'}
-           </span>
-        </div>
-
-        {/* Content List - Changed from Grid to Flex Column (Lines) */}
-        <div className="flex flex-col gap-3">
-          {loading ? (
-            // Skeleton Loading State
-            Array.from({ length: 12 }).map((_, i) => (
+      <main className="flex-1 w-full max-w-3xl mx-auto px-4 md:px-6 lg:px-8 py-6">
+        {loading ? (
+          // Skeleton Loading State
+          <div className="space-y-0">
+            {Array.from({ length: 12 }).map((_, i) => (
               <SkeletonCard key={i} />
-            ))
-          ) : error ? (
-            // Error State - Keep retry button here for errors
-            <ErrorState message={error} onRetry={handleRefresh} />
-          ) : (
-            // Data State
-            items.length > 0 ? (
-              items.map((item) => (
-                <NewsCard 
-                  key={`${item.source}-${item.id}`} 
-                  item={item} 
-                  onClick={setSelectedItem} 
+            ))}
+          </div>
+        ) : error ? (
+          // Error State
+          <ErrorState message={error} onRetry={handleRefresh} />
+        ) : (
+          // Data State
+          items.length > 0 ? (
+            <div className="space-y-0">
+              {items.map((item) => (
+                <NewsCard
+                  key={`${item.source}-${item.id}`}
+                  item={item}
+                  onClick={setSelectedItem}
                 />
-              ))
-            ) : (
-              // Empty State (No items but no error)
-              <div className="col-span-full flex flex-col items-center justify-center py-20 text-slate-500">
-                <p className="text-lg">Nenhuma notícia encontrada.</p>
-                <button 
-                  onClick={handleRefresh}
-                  className="mt-4 text-blue-400 hover:underline"
-                >
-                  Tentar Novamente
-                </button>
-              </div>
-            )
-          )}
-        </div>
+              ))}
+            </div>
+          ) : (
+            // Empty State
+            <div className="flex flex-col items-center justify-center py-20 text-slate-500">
+              <p className="text-lg">Nenhuma notícia encontrada.</p>
+              <button
+                onClick={handleRefresh}
+                className="mt-4 text-blue-400 hover:underline"
+              >
+                Tentar Novamente
+              </button>
+            </div>
+          )
+        )}
       </main>
 
       {/* TabNews Modal */}
