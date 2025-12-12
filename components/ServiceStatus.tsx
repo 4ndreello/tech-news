@@ -88,7 +88,7 @@ export default function ServiceStatusWidget() {
             className="fixed inset-0 z-40"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute right-0 mt-2 w-64 bg-[#0f172a] border border-slate-800/50 rounded-lg shadow-xl z-50 overflow-hidden">
+          <div className="absolute right-0 mt-2 w-full max-w-64 bg-[#0f172a] border border-slate-800/50 rounded-lg shadow-xl z-50 overflow-hidden">
             <div className="p-3 border-b border-slate-800/50">
               <h3 className="text-sm font-semibold text-white">
                 Status dos Serviços
