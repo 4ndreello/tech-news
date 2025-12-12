@@ -143,7 +143,7 @@ export interface Highlight {
   id: string;
   title: string;
   summary: string; // AI resume in 1-2 lines
-  source: "twitter" | "reddit" | "hn";
+  source: "twitter" | "reddit" | "devto";
   author: string;
   url: string;
   engagement: {

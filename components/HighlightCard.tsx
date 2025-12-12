@@ -22,8 +22,8 @@ export default function HighlightCard({ highlight }: HighlightCardProps) {
         return { label: "X", color: "bg-blue-500/10 text-blue-400" };
       case "reddit":
         return { label: "Reddit", color: "bg-orange-500/10 text-orange-400" };
-      case "hn":
-        return { label: "HN", color: "bg-orange-500/10 text-orange-400" };
+      case "devto":
+        return { label: "Dev.to", color: "bg-orange-500/10 text-orange-400" };
     }
   };
 
