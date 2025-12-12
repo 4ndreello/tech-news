@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import ReactMarkdown from 'react-markdown';
-import { X, ExternalLink, Loader2 } from 'lucide-react';
-import { NewsItem, Comment } from '../types';
-import { timeAgo } from '../utils/date';
-import { fetchTabNewsComments } from '../services/api';
+import React, { useEffect, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import { X, ExternalLink, Loader2 } from "lucide-react";
+import { NewsItem, Comment } from "../types";
+import { timeAgo } from "../utils/date";
+import { fetchTabNewsComments } from "../services/api";
 
 interface ModalProps {
   isOpen: boolean;
@@ -13,34 +13,39 @@ interface ModalProps {
 
 // Recursively render comments
 const CommentTree = ({ comments }: { comments: Comment[] }) => {
-    if (!comments || comments.length === 0) return null;
+  if (!comments || comments.length === 0) return null;
 
-    return (
-        <div className="flex flex-col gap-6 mt-6">
-            {comments.map((comment) => (
-                <div key={comment.id} className="pl-4 border-l border-slate-800">
-                    <div className="flex items-center gap-3 mb-2 text-sm text-slate-500">
-                         <span className="font-medium text-slate-300">{comment.owner_username}</span>
-                         <span>·</span>
-                         <span>{timeAgo(comment.created_at)}</span>
-                         {comment.tabcoins !== undefined && comment.tabcoins > 0 && (
-                             <span className="text-slate-400">
-                                 {comment.tabcoins} pts
-                             </span>
-                         )}
-                    </div>
+  return (
+    <div className="flex flex-col gap-6 mt-6">
+      {comments.map((comment) => (
+        <div key={comment.id} className="pl-4 border-l border-slate-800">
+          <div className="flex items-center gap-3 mb-2 text-sm text-slate-500">
+            <a
+              href={`https://www.tabnews.com.br/${comment.owner_username}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-slate-300 hover:text-slate-200 hover:underline transition-colors"
+            >
+              {comment.owner_username}
+            </a>
+            <span>·</span>
+            <span>{timeAgo(comment.created_at)}</span>
+            {comment.tabcoins !== undefined && comment.tabcoins > 0 && (
+              <span className="text-slate-400">{comment.tabcoins} pts</span>
+            )}
+          </div>
 
-                    <div className="markdown-body !text-base text-slate-300 mb-2">
-                        <ReactMarkdown>{comment.body}</ReactMarkdown>
-                    </div>
+          <div className="markdown-body !text-base text-slate-300 mb-2">
+            <ReactMarkdown>{comment.body}</ReactMarkdown>
+          </div>
 
-                    {comment.children && comment.children.length > 0 && (
-                        <CommentTree comments={comment.children} />
-                    )}
-                </div>
-            ))}
+          {comment.children && comment.children.length > 0 && (
+            <CommentTree comments={comment.children} />
+          )}
         </div>
-    );
+      ))}
+    </div>
+  );
 };
 
 export default function Modal({ isOpen, onClose, item }: ModalProps) {
@@ -49,18 +54,18 @@ export default function Modal({ isOpen, onClose, item }: ModalProps) {
 
   // Fetch comments when item changes
   useEffect(() => {
-    if (isOpen && item && item.source === 'TabNews') {
-        setLoadingComments(true);
-        setComments([]); // Reset
-        
-        if (item.owner_username && item.slug) {
-            fetchTabNewsComments(item.owner_username, item.slug)
-                .then(data => setComments(data))
-                .catch(err => console.error("Failed to load comments", err))
-                .finally(() => setLoadingComments(false));
-        } else {
-            setLoadingComments(false);
-        }
+    if (isOpen && item && item.source === "TabNews") {
+      setLoadingComments(true);
+      setComments([]); // Reset
+
+      if (item.owner_username && item.slug) {
+        fetchTabNewsComments(item.owner_username, item.slug)
+          .then((data) => setComments(data))
+          .catch((err) => console.error("Failed to load comments", err))
+          .finally(() => setLoadingComments(false));
+      } else {
+        setLoadingComments(false);
+      }
     }
   }, [isOpen, item]);
 
@@ -80,7 +85,6 @@ export default function Modal({ isOpen, onClose, item }: ModalProps) {
 
       {/* Modal Content */}
       <div className="relative w-full max-w-3xl max-h-[90vh] bg-[#0f172a] border border-slate-800/50 rounded-lg shadow-2xl overflow-hidden flex flex-col">
-
         {/* Header */}
         <div className="p-6 border-b border-slate-800/50 flex-shrink-0">
           <div className="flex justify-between items-start gap-6">
@@ -89,7 +93,14 @@ export default function Modal({ isOpen, onClose, item }: ModalProps) {
                 {item.title}
               </h2>
               <div className="flex items-center gap-3 text-sm text-slate-500">
-                <span className="text-slate-400">{item.author}</span>
+                <a
+                  href={`https://www.tabnews.com.br/${item.author}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-slate-400 hover:text-slate-300 hover:underline transition-colors"
+                >
+                  {item.author}
+                </a>
                 <span>·</span>
                 <span>{timeAgo(item.publishedAt)}</span>
                 <span>·</span>
@@ -110,24 +121,26 @@ export default function Modal({ isOpen, onClose, item }: ModalProps) {
           {/* Post Body (if text post) */}
           {item.body && (
             <div className="markdown-body text-slate-200 pb-8 mb-8 border-b border-slate-800/50">
-               <ReactMarkdown>{item.body}</ReactMarkdown>
+              <ReactMarkdown>{item.body}</ReactMarkdown>
             </div>
           )}
 
           {/* Comments Section */}
           <div>
             <h3 className="text-lg font-semibold text-white mb-6">
-                Comentários
+              Comentários
             </h3>
 
             {loadingComments ? (
-                <div className="flex justify-center py-10">
-                    <Loader2 className="animate-spin text-slate-400" size={28} />
-                </div>
+              <div className="flex justify-center py-10">
+                <Loader2 className="animate-spin text-slate-400" size={28} />
+              </div>
             ) : comments.length > 0 ? (
-                <CommentTree comments={comments} />
+              <CommentTree comments={comments} />
             ) : (
-                <p className="text-slate-500 text-base">Nenhum comentário encontrado.</p>
+              <p className="text-slate-500 text-base">
+                Nenhum comentário encontrado.
+              </p>
             )}
           </div>
         </div>
@@ -140,7 +153,9 @@ export default function Modal({ isOpen, onClose, item }: ModalProps) {
             rel="noopener noreferrer"
             className="flex items-center gap-2 px-4 py-2 text-blue-400 hover:text-blue-300 transition-colors text-sm"
           >
-            <span>{item.sourceUrl ? 'Acessar link original' : 'Ver no TabNews'}</span>
+            <span>
+              {item.sourceUrl ? "Acessar link original" : "Ver no TabNews"}
+            </span>
             <ExternalLink size={14} />
           </a>
         </div>

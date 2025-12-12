@@ -1,7 +1,7 @@
-import React from 'react';
-import { MessageSquare } from 'lucide-react';
-import { NewsItem, Source } from '../types';
-import { timeAgo } from '../utils/date';
+import React from "react";
+import { MessageSquare } from "lucide-react";
+import { NewsItem, Source } from "../types";
+import { timeAgo } from "../utils/date";
 
 interface NewsCardProps {
   item: NewsItem;
@@ -13,17 +13,19 @@ export default function NewsCard({ item, onClick }: NewsCardProps) {
 
   // Lógica de Link Principal
   const tabNewsUrl = `https://www.tabnews.com.br/${item.owner_username}/${item.slug}`;
-  const mainLink = isHN ? (item.url || `https://news.ycombinator.com/item?id=${item.id}`) : tabNewsUrl;
+  const mainLink = isHN
+    ? item.url || `https://news.ycombinator.com/item?id=${item.id}`
+    : tabNewsUrl;
 
   // Extrair domínio apenas para links externos do HN
-  let domain = '';
+  let domain = "";
   if (isHN && mainLink) {
     try {
-        const urlObj = new URL(mainLink);
-        // Não mostrar se for o próprio site do HN
-        if (!urlObj.hostname.includes('ycombinator.com')) {
-             domain = urlObj.hostname.replace('www.', '');
-        }
+      const urlObj = new URL(mainLink);
+      // Não mostrar se for o próprio site do HN
+      if (!urlObj.hostname.includes("ycombinator.com")) {
+        domain = urlObj.hostname.replace("www.", "");
+      }
     } catch (e) {}
   }
 
@@ -32,7 +34,7 @@ export default function NewsCard({ item, onClick }: NewsCardProps) {
     e.stopPropagation();
 
     if (isHN) {
-      window.open(`https://news.ycombinator.com/item?id=${item.id}`, '_blank');
+      window.open(`https://news.ycombinator.com/item?id=${item.id}`, "_blank");
     } else {
       onClick(item);
     }
@@ -59,17 +61,29 @@ export default function NewsCard({ item, onClick }: NewsCardProps) {
             <h3 className="text-base font-normal text-slate-100 group-hover:text-white transition-colors leading-relaxed mb-1.5">
               {item.title}
               {domain && (
-                <span className="text-sm text-slate-500 ml-2">
-                  ({domain})
-                </span>
+                <span className="text-sm text-slate-500 ml-2">({domain})</span>
               )}
             </h3>
 
             <div className="flex items-center gap-3 text-sm text-slate-500">
-              <span className={`text-xs px-2 py-0.5 rounded ${isHN ? 'bg-orange-500/10 text-orange-400' : 'bg-blue-500/10 text-blue-400'}`}>
-                {isHN ? 'HN' : 'TN'}
+              <span
+                className={`text-xs px-2 py-0.5 rounded ${isHN ? "bg-orange-500/10 text-orange-400" : "bg-blue-500/10 text-blue-400"}`}
+              >
+                {isHN ? "HN" : "TN"}
               </span>
-              <span>{item.author}</span>
+              <a
+                href={
+                  isHN
+                    ? `https://news.ycombinator.com/user?id=${item.author}`
+                    : `https://www.tabnews.com.br/${item.author}`
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="hover:text-slate-400 hover:underline transition-colors"
+              >
+                {item.author}
+              </a>
               <span>·</span>
               <span>{timeAgo(item.publishedAt)}</span>
               <button

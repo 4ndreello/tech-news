@@ -133,7 +133,7 @@ export const fetchSmartMix = async (): Promise<NewsItem[]> => {
 
 export const fetchTabNewsComments = async (
   username: string,
-  slug: string
+  slug: string,
 ): Promise<Comment[]> => {
   const cacheKey = `comments-${username}-${slug}`;
 
