@@ -1,5 +1,4 @@
-# Stage 1: Build
-FROM node:20-alpine AS builder
+FROM node:20-alpine
 
 # Define o diretório de trabalho
 WORKDIR /app
@@ -7,8 +6,8 @@ WORKDIR /app
 # Copia os arquivos de dependências
 COPY package*.json ./
 
-# Instala as dependências
-RUN npm ci --only=production=false
+# Instala as dependências de build
+RUN npm ci
 
 # Copia o restante dos arquivos
 COPY . .
@@ -16,16 +15,14 @@ COPY . .
 # Copia .env.production para .env
 RUN cp .env.production .env
 
+# Build da aplicação
 RUN npm run build
 
-# Stage 2: Production
-FROM nginx:alpine
+# Instala o serve globalmente
+RUN npm install -g serve
 
-# Copia os arquivos buildados do stage anterior
-COPY --from=builder /app/dist /usr/share/nginx/html
-
-# Expõe a porta 8080 (padrão do GCP Cloud Run)
+# Expõe a porta 8080
 EXPOSE 8080
 
-# Comando para iniciar o nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Comando para servir os arquivos estáticos do build
+CMD ["serve", "-s", "dist", "-l", "8080"]
