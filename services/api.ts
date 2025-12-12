@@ -1,4 +1,9 @@
-import { NewsItem, Comment, ServicesStatusResponse } from "../types";
+import { NewsItem, Comment, ServicesStatusResponse, Highlight } from "../types";
+
+interface HighlightsResponse {
+  items: Highlight[];
+  nextCursor: string | null;
+}
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || "http://localhost:8080/api";
@@ -101,10 +106,17 @@ export const fetchHackerNews = async (): Promise<NewsItem[]> => {
   return request;
 };
 
-export const fetchSmartMix = async (): Promise<NewsItem[]> => {
-  const cacheKey = "mix";
+export const fetchSmartMix = async (
+  limit: number = 10,
+  after?: string,
+): Promise<NewsResponse> => {
+  const params = new URLSearchParams();
+  params.append("limit", limit.toString());
+  if (after) params.append("after", after);
 
-  const cached = getCachedData<NewsItem[]>(cacheKey);
+  const cacheKey = `mix-${limit}-${after || "start"}`;
+
+  const cached = getCachedData<NewsResponse>(cacheKey);
   if (cached) return cached;
 
   const inflight = inflightRequests.get(cacheKey);
@@ -112,7 +124,7 @@ export const fetchSmartMix = async (): Promise<NewsItem[]> => {
 
   const request = (async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/news/mix`);
+      const res = await fetch(`${API_BASE_URL}/news/mix?${params}`);
       if (!res.ok) {
         const error = await res
           .json()
@@ -177,6 +189,43 @@ export const fetchServiceStatus = async (): Promise<ServicesStatusResponse> => {
       const res = await fetch(`${API_BASE_URL}/services/status`);
       if (!res.ok) {
         throw new Error("Falha ao carregar status dos serviços");
+      }
+      const data = await res.json();
+      setCachedData(cacheKey, data);
+      return data;
+    } finally {
+      inflightRequests.delete(cacheKey);
+    }
+  })();
+
+  inflightRequests.set(cacheKey, request);
+  return request;
+};
+
+export const fetchHighlights = async (
+  limit: number = 10,
+  after?: string,
+): Promise<HighlightsResponse> => {
+  const params = new URLSearchParams();
+  params.append("limit", limit.toString());
+  if (after) params.append("after", after);
+
+  const cacheKey = `highlights-${limit}-${after || "start"}`;
+
+  const cached = getCachedData<HighlightsResponse>(cacheKey);
+  if (cached) return cached;
+
+  const inflight = inflightRequests.get(cacheKey);
+  if (inflight) return inflight;
+
+  const request = (async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/highlights?${params}`);
+      if (!res.ok) {
+        const error = await res
+          .json()
+          .catch(() => ({ error: "Falha ao carregar highlights" }));
+        throw new Error(error.error || "Falha ao carregar highlights");
       }
       const data = await res.json();
       setCachedData(cacheKey, data);

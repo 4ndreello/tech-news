@@ -23,5 +23,5 @@ export const timeAgo = (dateString: string): string => {
   if (interval > 1) {
     return `há ${Math.floor(interval)}m`;
   }
-  return 'agora mesmo';
+  return "agora mesmo";
 };

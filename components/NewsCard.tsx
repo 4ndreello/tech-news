@@ -71,19 +71,20 @@ export default function NewsCard({ item, onClick }: NewsCardProps) {
               >
                 {isHN ? "HN" : "TN"}
               </span>
-              <a
-                href={
-                  isHN
-                    ? `https://news.ycombinator.com/user?id=${item.author}`
-                    : `https://www.tabnews.com.br/${item.author}`
-                }
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="hover:text-slate-400 hover:underline transition-colors"
+              <span
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.open(
+                    isHN
+                      ? `https://news.ycombinator.com/user?id=${item.author}`
+                      : `https://www.tabnews.com.br/${item.author}`,
+                    "_blank",
+                  );
+                }}
+                className="hover:text-slate-400 hover:underline transition-colors cursor-pointer"
               >
                 {item.author}
-              </a>
+              </span>
               <span>·</span>
               <span>{timeAgo(item.publishedAt)}</span>
               <button
