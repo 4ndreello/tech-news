@@ -78,7 +78,18 @@ export default function App() {
         }
 
         if (!ignore) {
-          setItems(Array.isArray(fetchedNewsItems) ? fetchedNewsItems : []);
+          const uniqueItems = [];
+          const seenKeys = new Set();
+          if (Array.isArray(fetchedNewsItems)) {
+            for (const item of fetchedNewsItems) {
+              const key = `${item.source}-${item.id}`;
+              if (!seenKeys.has(key)) {
+                uniqueItems.push(item);
+                seenKeys.add(key);
+              }
+            }
+          }
+          setItems(uniqueItems);
           if (view === "mix") {
             setMixNextCursor(newMixNextCursor);
             setHasMoreMixItems(newHasMoreMix);
@@ -171,7 +182,13 @@ export default function App() {
         temMais: !!response.nextCursor,
       });
 
-      setItems((prev) => [...prev, ...response.items]);
+      setItems((prev) => {
+        const existingKeys = new Set(prev.map((i) => `${i.source}-${i.id}`));
+        const newUniqueItems = response.items.filter(
+          (item) => !existingKeys.has(`${item.source}-${item.id}`),
+        );
+        return [...prev, ...newUniqueItems];
+      });
       setMixNextCursor(response.nextCursor);
       setHasMoreMixItems(!!response.nextCursor);
 
@@ -235,8 +252,7 @@ export default function App() {
     return items.filter(
       (item) =>
         item.title.toLowerCase().includes(query) ||
-        item.author.toLowerCase().includes(query) ||
-        (item.body && item.body.toLowerCase().includes(query)),
+        item.author.toLowerCase().includes(query)
     );
   }, [items, searchQuery]);
 

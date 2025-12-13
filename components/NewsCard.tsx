@@ -1,5 +1,5 @@
 import React from "react";
-import { MessageSquare } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { NewsItem, Source } from "../types";
 import { timeAgo } from "../utils/date";
 
@@ -34,10 +34,11 @@ export default function NewsCard({ item, onClick }: NewsCardProps) {
     e.stopPropagation();
 
     if (isHN) {
-      window.open(`https://news.ycombinator.com/item?id=${item.id}`, "_blank");
-    } else {
-      onClick(item);
+      // Impede a ação para o Hacker News, como solicitado
+      return;
     }
+
+    onClick(item);
   };
 
   return (
@@ -89,10 +90,14 @@ export default function NewsCard({ item, onClick }: NewsCardProps) {
               <span>{timeAgo(item.publishedAt)}</span>
               <button
                 onClick={handleCommentClick}
-                className="flex items-center gap-1.5 hover:text-slate-400 transition-colors"
+                className={`flex items-center gap-1.5 transition-colors ${
+                  isHN
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:text-slate-400"
+                }`}
                 title={isHN ? "Abrir discussão" : "Ler comentários"}
               >
-                <MessageSquare size={14} />
+                <MessageCircle size={14} />
                 <span>{item.commentCount || 0}</span>
               </button>
             </div>

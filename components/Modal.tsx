@@ -92,7 +92,7 @@ export default function Modal({ isOpen, onClose, item }: ModalProps) {
               <h2 className="text-xl font-semibold text-white leading-snug mb-3">
                 {item.title}
               </h2>
-              <div className="flex items-center gap-3 text-sm text-slate-500">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-500">
                 <a
                   href={`https://www.tabnews.com.br/${item.author}`}
                   target="_blank"

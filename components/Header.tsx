@@ -67,11 +67,7 @@ export default function Header({ currentView, onViewChange }: HeaderProps) {
         {isMenuOpen && (
           <div className="fixed inset-0 top-[56px] bg-black/50 z-40 md:hidden" onClick={() => setIsMenuOpen(false)}>
             <div className="bg-[#0f172a] w-64 h-[calc(100vh-56px)] p-4 shadow-lg" onClick={(e) => e.stopPropagation()}>
-              <div className="flex justify-end mb-4">
-                <button onClick={() => setIsMenuOpen(false)} className="text-white p-2 rounded-md hover:bg-slate-800">
-                  <X size={24} />
-                </button>
-              </div>
+
               <nav className="flex flex-col gap-4">
                 {navItems.map((item) => {
                   const isActive = currentView === item.id;
