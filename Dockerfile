@@ -15,6 +15,12 @@ COPY . .
 # Copia .env.production para .env
 RUN cp .env.production .env
 
+# Insere a versão do commit no .env
+RUN apk add --no-cache git && \
+    commit_hash=$(git log -1 --pretty=format:"%H" || echo "dev") && \
+    short_hash=$(echo "$commit_hash" | cut -c1-7) && \
+    echo "VERSION=$short_hash" >> .env
+
 # Build da aplicação
 RUN npm run build
 

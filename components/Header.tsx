@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { ViewMode } from '../types';
-import ServiceStatusWidget from './ServiceStatus';
-import { Menu, X } from 'lucide-react';
+import React, { useState } from "react";
+import { ViewMode } from "../types";
+import ServiceStatusWidget from "./ServiceStatus";
+import { Menu, X } from "lucide-react";
 
 interface HeaderProps {
   currentView: ViewMode;
@@ -11,18 +11,22 @@ interface HeaderProps {
 export default function Header({ currentView, onViewChange }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navItems = [
-    { id: 'mix', label: 'Top' },
-    { id: 'tabnews', label: 'TabNews' },
-    { id: 'hackernews', label: 'Hacker News' },
+    { id: "mix", label: "Top" },
+    { id: "tabnews", label: "TabNews" },
+    { id: "hackernews", label: "Hacker News" },
   ];
 
   return (
     <header className="sticky top-0 z-50 w-full bg-[#0f172a] border-b border-slate-800/50">
       <div className="max-w-3xl mx-auto px-4 md:px-6 h-14 flex items-center justify-between">
-
         {/* Brand */}
-        <div className="flex items-center">
-          <span className="text-lg font-semibold text-white">TechNews</span>
+        <div className="flex flex-col">
+          <span className="text-lg font-semibold text-white -mb-1">
+            TechNews
+          </span>
+          <span className="text-xs text-slate-500 pl-px">
+            Versão: {import.meta.env.VITE_VERSION}
+          </span>
         </div>
 
         {/* Navigation / Mobile Menu Toggle */}
@@ -38,9 +42,11 @@ export default function Header({ currentView, onViewChange }: HeaderProps) {
                   onClick={() => onViewChange(item.id as ViewMode)}
                   className={`
                     text-sm font-medium transition-colors
-                    ${isActive
-                      ? 'text-white'
-                      : 'text-slate-500 hover:text-slate-300'}
+                    ${
+                      isActive
+                        ? "text-white"
+                        : "text-slate-500 hover:text-slate-300"
+                    }
                   `}
                 >
                   {item.label}
@@ -65,9 +71,14 @@ export default function Header({ currentView, onViewChange }: HeaderProps) {
 
         {/* Mobile Menu Drawer (Conditionally rendered) */}
         {isMenuOpen && (
-          <div className="fixed inset-0 top-[56px] bg-black/50 z-40 md:hidden" onClick={() => setIsMenuOpen(false)}>
-            <div className="bg-[#0f172a] w-64 h-[calc(100vh-56px)] p-4 shadow-lg" onClick={(e) => e.stopPropagation()}>
-
+          <div
+            className="fixed inset-0 top-[56px] bg-black/50 z-40 md:hidden"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            <div
+              className="bg-[#0f172a] w-64 h-[calc(100vh-56px)] p-4 shadow-lg"
+              onClick={(e) => e.stopPropagation()}
+            >
               <nav className="flex flex-col gap-4">
                 {navItems.map((item) => {
                   const isActive = currentView === item.id;
@@ -79,7 +90,9 @@ export default function Header({ currentView, onViewChange }: HeaderProps) {
                         setIsMenuOpen(false);
                       }}
                       className={`text-left p-2 rounded-lg transition-colors text-lg font-medium ${
-                        isActive ? 'bg-slate-700 text-white' : 'text-slate-300 hover:bg-slate-800'
+                        isActive
+                          ? "bg-slate-700 text-white"
+                          : "text-slate-300 hover:bg-slate-800"
                       }`}
                     >
                       {item.label}

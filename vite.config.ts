@@ -16,5 +16,8 @@ export default defineConfig(({ mode }) => {
         "@": path.resolve(__dirname, "."),
       },
     },
+    define: {
+      "import.meta.env.VITE_VERSION": JSON.stringify(env.VERSION),
+    },
   };
 });
