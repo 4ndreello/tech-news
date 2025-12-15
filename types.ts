@@ -154,3 +154,14 @@ export interface Highlight {
   };
   publishedAt: string;
 }
+
+// Union type with discriminator 'type' for unified feed
+export type FeedItem =
+  | ({ type: "news" } & NewsItem)
+  | ({ type: "highlight" } & Highlight);
+
+// Response from /api/feed endpoint
+export interface FeedResponse {
+  items: FeedItem[];
+  nextCursor: string | null;
+}

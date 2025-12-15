@@ -13,19 +13,25 @@ import SkeletonHighlightCard from "./components/SkeletonHighlightCard";
 import Modal from "./components/Modal";
 import ErrorState from "./components/ErrorState";
 import SearchBar from "./components/SearchBar";
-import { ViewMode, NewsItem, Highlight, NewsOrHighlight } from "./types";
+import {
+  ViewMode,
+  NewsItem,
+  Highlight,
+  NewsOrHighlight,
+  FeedItem,
+} from "./types";
 import {
   fetchSmartMix,
   fetchTabNews,
   fetchHackerNews,
   fetchHighlights,
+  fetchFeed,
 } from "./services/api";
 
 export default function App() {
   const [view, setView] = useState<ViewMode>("mix");
   const [items, setItems] = useState<NewsItem[]>([]);
-  const [highlights, setHighlights] = useState<Highlight[]>([]);
-  const [highlightsLoading, setHighlightsLoading] = useState(true);
+  const [feedItems, setFeedItems] = useState<FeedItem[]>([]); // New: unified feed items (news + highlights intercalados)
   const [mixNextCursor, setMixNextCursor] = useState<string | null>(null); // New state for mix pagination
   const [hasMoreMixItems, setHasMoreMixItems] = useState(false); // New state for mix pagination
   const [loadingMoreMixItems, setLoadingMoreMixItems] = useState(false); // New state for mix pagination
@@ -52,26 +58,28 @@ export default function App() {
       try {
         switch (view) {
           case "mix":
-            setLoadingMoreMixItems(true); // Indicate loading for mix items
-            console.log("[Initial Load] Buscando primeira página do mix...");
-            const mixResponse = await fetchSmartMix(10); // Fetch first page of mix
-            console.log("[Initial Load] Primeira página carregada:", {
-              itens: mixResponse.items.length,
-              proximoCursor: mixResponse.nextCursor,
-              temMais: !!mixResponse.nextCursor,
+            setLoadingMoreMixItems(true);
+            console.log("[Initial Load] Buscando primeira página do feed...");
+            const feedResponse = await fetchFeed(10); // Fetch first page with 10 items (includes news + highlights)
+            console.log("[Initial Load] Feed carregado:", {
+              itens: feedResponse.items.length,
+              proximoCursor: feedResponse.nextCursor,
+              temMais: !!feedResponse.nextCursor,
             });
-            fetchedNewsItems = mixResponse.items;
-            newMixNextCursor = mixResponse.nextCursor;
-            newHasMoreMix = !!mixResponse.nextCursor;
-            setLoadingMoreMixItems(false); // Done loading mix items
+            setFeedItems(feedResponse.items);
+            newMixNextCursor = feedResponse.nextCursor;
+            newHasMoreMix = !!feedResponse.nextCursor;
+            setLoadingMoreMixItems(false);
             break;
           case "tabnews":
             fetchedNewsItems = await fetchTabNews();
+            setFeedItems([]); // Clear feed items when not in mix view
             setMixNextCursor(null);
             setHasMoreMixItems(false);
             break;
           case "hackernews":
             fetchedNewsItems = await fetchHackerNews();
+            setFeedItems([]); // Clear feed items when not in mix view
             setMixNextCursor(null);
             setHasMoreMixItems(false);
             break;
@@ -123,40 +131,8 @@ export default function App() {
     };
   }, [view, refreshTrigger]);
 
-  // Fetch highlights asynchronously (all at once, no pagination for highlights anymore)
-  useEffect(() => {
-    if (view !== "mix") {
-      setHighlights([]);
-      setHighlightsLoading(false);
-      return;
-    }
-
-    let ignore = false;
-
-    const fetchHighlightsData = async () => {
-      setHighlightsLoading(true);
-      try {
-        const response = await fetchHighlights(); // Fetch all highlights, no limit/after params
-        if (!ignore) {
-          setHighlights(response.items || []); // Use response.items
-        }
-      } catch (err) {
-        if (!ignore) {
-          setHighlights([]); // Set to empty on error
-        }
-      } finally {
-        if (!ignore) {
-          setHighlightsLoading(false);
-        }
-      }
-    };
-
-    fetchHighlightsData();
-
-    return () => {
-      ignore = true;
-    };
-  }, [view, refreshTrigger]);
+  // Highlights are now fetched within the feed endpoint for mix view
+  // No separate highlights fetch needed anymore
 
   const loadMoreMixItems = useCallback(async () => {
     if (!hasMoreMixItems || loadingMoreMixItems || view !== "mix") {
@@ -168,24 +144,24 @@ export default function App() {
       return;
     }
 
-    console.log("[Infinite Scroll] Carregando mais itens...", {
+    console.log("[Infinite Scroll] Carregando mais itens do feed...", {
       cursorAtual: mixNextCursor,
-      totalItensAtuais: items.length,
+      totalItensAtuais: feedItems.length,
     });
 
     setLoadingMoreMixItems(true);
     try {
-      const response = await fetchSmartMix(10, mixNextCursor!);
+      const response = await fetchFeed(10, mixNextCursor!);
       console.log("[Infinite Scroll] Resposta recebida:", {
         novosItens: response.items.length,
         proximoCursor: response.nextCursor,
         temMais: !!response.nextCursor,
       });
 
-      setItems((prev) => {
-        const existingKeys = new Set(prev.map((i) => `${i.source}-${i.id}`));
+      setFeedItems((prev) => {
+        const existingKeys = new Set(prev.map((i) => i.id));
         const newUniqueItems = response.items.filter(
-          (item) => !existingKeys.has(`${item.source}-${item.id}`),
+          (item) => !existingKeys.has(item.id),
         );
         return [...prev, ...newUniqueItems];
       });
@@ -201,7 +177,13 @@ export default function App() {
     } finally {
       setLoadingMoreMixItems(false);
     }
-  }, [hasMoreMixItems, loadingMoreMixItems, mixNextCursor, view, items.length]);
+  }, [
+    hasMoreMixItems,
+    loadingMoreMixItems,
+    mixNextCursor,
+    view,
+    feedItems.length,
+  ]);
 
   // Intersection Observer for infinite scroll (mix view)
   useEffect(() => {
@@ -246,43 +228,61 @@ export default function App() {
 
   // Filter items based on search query
   const filteredItems = useMemo(() => {
-    if (!searchQuery.trim()) return items;
+    if (!searchQuery.trim()) {
+      // If mix view, return feedItems as-is (already intercalated)
+      if (view === "mix") {
+        return feedItems;
+      }
+      return items;
+    }
 
     const query = searchQuery.toLowerCase();
+
+    // For mix view with search, filter feedItems
+    if (view === "mix") {
+      return feedItems.filter((item) => {
+        if (item.type === "news") {
+          return (
+            item.title.toLowerCase().includes(query) ||
+            item.author.toLowerCase().includes(query)
+          );
+        } else {
+          // Highlight
+          return (
+            item.title.toLowerCase().includes(query) ||
+            item.author.toLowerCase().includes(query)
+          );
+        }
+      });
+    }
+
+    // For other views, filter regular items
     return items.filter(
       (item) =>
         item.title.toLowerCase().includes(query) ||
-        item.author.toLowerCase().includes(query)
+        item.author.toLowerCase().includes(query),
     );
-  }, [items, searchQuery]);
+  }, [items, feedItems, searchQuery, view]);
 
-  // Inject highlights or skeletons into news feed at regular intervals
+  // For mix view, items already come intercalated from backend
+  // For other views, just return the filtered items
   const itemsWithHighlights = useMemo(() => {
-    if (searchQuery.trim() || view !== "mix") return filteredItems;
+    return filteredItems;
+  }, [filteredItems]);
 
-    const result: NewsOrHighlight[] = [];
-    let highlightIndex = 0;
-    filteredItems.forEach((item, index) => {
-      result.push(item);
+  // Find the last news item index for attaching the infinite scroll ref
+  // (highlights don't need ref, only news items trigger loading)
+  const lastNewsIndex = useMemo(() => {
+    if (view !== "mix") return itemsWithHighlights.length - 1;
 
-      // Insert highlight after every 5th item starting from 2nd (positions 2,7,12,17,22,...)
-      if ((index + 1 - 2) % 5 === 0 && index >= 1) {
-        if (highlightIndex < highlights.length) {
-          result.push({
-            type: "highlight",
-            data: highlights[highlightIndex],
-          });
-          highlightIndex++;
-        } else if (highlightsLoading) {
-          result.push({
-            type: "skeleton-highlight",
-          });
-        }
+    // For mix view, find the last item that is a news item
+    for (let i = itemsWithHighlights.length - 1; i >= 0; i--) {
+      if ((itemsWithHighlights[i] as any).type === "news") {
+        return i;
       }
-    });
-
-    return result;
-  }, [filteredItems, searchQuery, highlights, highlightsLoading, view]);
+    }
+    return -1;
+  }, [itemsWithHighlights, view]);
 
   return (
     <div className="min-h-screen bg-[#0f172a] text-slate-200 font-sans selection:bg-blue-500/30 flex flex-col">
@@ -298,13 +298,15 @@ export default function App() {
       {/* Main Content */}
       <main className="flex-1 w-full max-w-3xl mx-auto px-4 md:px-6 lg:px-8 py-6">
         {/* Search Bar - Only show when not loading and has data */}
-        {!loading && !error && items.length > 0 && (
-          <SearchBar
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="Buscar por título, autor ou conteúdo..."
-          />
-        )}
+        {!loading &&
+          !error &&
+          (view === "mix" ? feedItems.length > 0 : items.length > 0) && (
+            <SearchBar
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Buscar por título, autor ou conteúdo..."
+            />
+          )}
 
         {error ? (
           // Error State
@@ -314,53 +316,70 @@ export default function App() {
           <div className="space-y-0">
             {(() => {
               const skeletonItems = [];
-              for (let i = 0; i < 12; i++) {
-                skeletonItems.push(<SkeletonCard key={`skeleton-${i}`} />);
-                if (highlightsLoading && (i + 1 - 2) % 5 === 0 && i >= 1) {
-                  skeletonItems.push(
-                    <SkeletonHighlightCard key={`highlight-skeleton-${i}`} />,
-                  );
+              const count = 10;
+
+              if (view === "mix") {
+                // Mix view: Primeiro 2 news + 1 highlight, depois 5 news + 1 highlight
+                skeletonItems.push(<SkeletonCard key="skeleton-0" />);
+                skeletonItems.push(<SkeletonCard key="skeleton-1" />);
+                skeletonItems.push(
+                  <SkeletonHighlightCard key="highlight-skeleton-0" />,
+                );
+
+                // Resto: padrão 5:1 (positions 3-9 = 7 items: 5N + 1H + 1N)
+                for (let i = 3; i < count; i++) {
+                  // Position 8 gets a highlight (3+5=8)
+                  if (i === 8) {
+                    skeletonItems.push(
+                      <SkeletonHighlightCard key={`highlight-skeleton-${i}`} />,
+                    );
+                  } else {
+                    skeletonItems.push(<SkeletonCard key={`skeleton-${i}`} />);
+                  }
+                }
+              } else {
+                // Other views: only news skeletons
+                for (let i = 0; i < count; i++) {
+                  skeletonItems.push(<SkeletonCard key={`skeleton-${i}`} />);
                 }
               }
-              // Add a skeleton for loading more mix items if applicable
-              if (
-                view === "mix" &&
-                hasMoreMixItems &&
-                loadingMoreMixItems &&
-                items.length === 0
-              ) {
-                skeletonItems.push(
-                  <SkeletonCard key="loading-more-mix-initial" />,
-                );
-              }
+
               return skeletonItems;
             })()}
           </div>
         ) : // Data State
         itemsWithHighlights.length > 0 ? (
           <div className="space-y-0">
-            {itemsWithHighlights.map((item: NewsOrHighlight, index) => {
-              const isLastItem = index === itemsWithHighlights.length - 1;
-              if ("type" in item) {
+            {itemsWithHighlights.map((item: any, index) => {
+              // Attach ref to the last NEWS item (not the last item overall)
+              const shouldAttachRef = index === lastNewsIndex;
+
+              // For mix view, items come with type field from backend
+              if (view === "mix" && "type" in item) {
                 if (item.type === "highlight") {
                   return (
                     <HighlightCard
-                      key={`highlight-${item.data.id}`}
-                      highlight={item.data}
+                      key={`highlight-${item.id}`}
+                      highlight={item}
                     />
                   );
-                } else if (item.type === "skeleton-highlight") {
+                } else if (item.type === "news") {
                   return (
-                    <SkeletonHighlightCard
-                      key={`skeleton-highlight-${index}`}
-                    />
+                    <div
+                      key={`news-${item.id}`}
+                      ref={shouldAttachRef ? lastItemRef : undefined}
+                    >
+                      <NewsCard item={item} onClick={setSelectedItem} />
+                    </div>
                   );
                 }
               }
+
+              // For other views, items are regular NewsItems
               return (
-                <div // Wrap NewsCard to attach ref for infinite scroll
+                <div
                   key={`${(item as NewsItem).source}-${(item as NewsItem).id}`}
-                  ref={view === "mix" && isLastItem ? lastItemRef : undefined}
+                  ref={shouldAttachRef ? lastItemRef : undefined}
                 >
                   <NewsCard item={item as NewsItem} onClick={setSelectedItem} />
                 </div>
@@ -370,7 +389,7 @@ export default function App() {
               <SkeletonCard key="loading-more-mix" />
             )}
           </div>
-        ) : items.length > 0 ? (
+        ) : (view === "mix" ? feedItems.length > 0 : items.length > 0) ? (
           // No results from search
           <div className="flex flex-col items-center justify-center py-20 text-slate-500">
             <p className="text-lg">
