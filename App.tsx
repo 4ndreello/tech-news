@@ -328,23 +328,9 @@ export default function App() {
               const count = 10;
 
               if (view === "mix") {
-                // Mix view: Primeiro 2 news + 1 highlight, depois 5 news + 1 highlight
-                skeletonItems.push(<SkeletonCard key="skeleton-0" />);
-                skeletonItems.push(<SkeletonCard key="skeleton-1" />);
-                skeletonItems.push(
-                  <SkeletonHighlightCard key="highlight-skeleton-0" />,
-                );
-
-                // Resto: padrão 5:1 (positions 3-9 = 7 items: 5N + 1H + 1N)
-                for (let i = 3; i < count; i++) {
-                  // Position 8 gets a highlight (3+5=8)
-                  if (i === 8) {
-                    skeletonItems.push(
-                      <SkeletonHighlightCard key={`highlight-skeleton-${i}`} />,
-                    );
-                  } else {
-                    skeletonItems.push(<SkeletonCard key={`skeleton-${i}`} />);
-                  }
+                // Mix view: Apenas news skeletons, sem highlight
+                for (let i = 0; i < count; i++) {
+                  skeletonItems.push(<SkeletonCard key={`skeleton-${i}`} />);
                 }
               } else {
                 // Other views: only news skeletons
