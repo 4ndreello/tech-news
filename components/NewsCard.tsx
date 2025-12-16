@@ -6,25 +6,65 @@ import { timeAgo } from "../utils/date";
 interface NewsCardProps {
   item: NewsItem;
   onClick: (item: NewsItem) => void;
+  onScoreClick: (item: NewsItem) => void;
 }
 
-export default function NewsCard({ item, onClick }: NewsCardProps) {
-  const isHN = item.source === Source.HackerNews;
+const sourceConfig = {
+  [Source.HackerNews]: {
+    name: "HACKERNEWS",
+    badgeStyles: "bg-orange-500/10 text-orange-400",
+    getMainLink: (item: NewsItem) =>
+      item.url || `https://news.ycombinator.com/item?id=${item.id}`,
+    getUserUrl: (author: string) =>
+      `https://news.ycombinator.com/user?id=${author}`,
+    canOpenModal: false,
+    commentActionTitle: "Abrir discussão",
+  },
+  [Source.TabNews]: {
+    name: "TABNEWS",
+    badgeStyles: "bg-blue-500/10 text-blue-400",
+    getMainLink: (item: NewsItem) =>
+      `https://www.tabnews.com.br/${item.owner_username}/${item.slug}`,
+    getUserUrl: (author: string) => `https://www.tabnews.com.br/${author}`,
+    canOpenModal: true,
+    commentActionTitle: "Ler comentários",
+  },
+  [Source.DevTo]: {
+    name: "DEVTO",
+    badgeStyles: "bg-purple-500/10 text-purple-400",
+    getMainLink: (item: NewsItem) => item.url!,
+    getUserUrl: (author: string) => `https://dev.to/${author}`,
+    canOpenModal: false,
+    commentActionTitle: "Ver no Dev.to",
+  },
+};
 
-  // Lógica de Link Principal
-  const tabNewsUrl = `https://www.tabnews.com.br/${item.owner_username}/${item.slug}`;
-  const mainLink = isHN
-    ? item.url || `https://news.ycombinator.com/item?id=${item.id}`
-    : tabNewsUrl;
+export default function NewsCard({
+  item,
+  onClick,
+  onScoreClick,
+}: NewsCardProps) {
+  const config = sourceConfig[item.source];
 
-  // Extrair domínio apenas para links externos do HN
+  if (!config) {
+    return null; // or a fallback UI
+  }
+
+  const mainLink = config.getMainLink(item);
+
   let domain = "";
-  if (isHN && mainLink) {
+  if (mainLink) {
     try {
       const urlObj = new URL(mainLink);
-      // Não mostrar se for o próprio site do HN
-      if (!urlObj.hostname.includes("ycombinator.com")) {
-        domain = urlObj.hostname.replace("www.", "");
+      const hostname = urlObj.hostname.replace("www.", "");
+
+      const isPlatformLink =
+        (item.source === Source.HackerNews &&
+          hostname.includes("ycombinator.com")) ||
+        (item.source === Source.TabNews && hostname.includes("tabnews.com.br"));
+
+      if (!isPlatformLink) {
+        domain = hostname;
       }
     } catch (e) {}
   }
@@ -33,12 +73,10 @@ export default function NewsCard({ item, onClick }: NewsCardProps) {
     e.preventDefault();
     e.stopPropagation();
 
-    if (isHN) {
-      // Impede a ação para o Hacker News, como solicitado
-      return;
+    if (config.canOpenModal) {
+      onClick(item);
     }
-
-    onClick(item);
+    // For other sources, the button is disabled, so no action is needed.
   };
 
   return (
@@ -51,8 +89,16 @@ export default function NewsCard({ item, onClick }: NewsCardProps) {
       >
         <div className="flex items-start gap-4">
           {/* Score */}
-          <div className="flex-shrink-0 w-12 text-center">
-            <div className="text-lg font-semibold text-slate-400 group-hover:text-slate-300 transition-colors">
+          <div
+            className="flex-shrink-0 w-12 text-center cursor-pointer"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onScoreClick(item);
+            }}
+            title="Ver detalhes do score"
+          >
+            <div className="text-lg font-semibold text-slate-400 group-hover:text-sky-400 transition-colors">
               {item.score}
             </div>
           </div>
@@ -68,19 +114,14 @@ export default function NewsCard({ item, onClick }: NewsCardProps) {
 
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-500">
               <span
-                className={`text-xs px-2 py-0.5 rounded ${isHN ? "bg-orange-500/10 text-orange-400" : "bg-blue-500/10 text-blue-400"}`}
+                className={`text-xs px-2 py-0.5 rounded ${config.badgeStyles}`}
               >
-                {isHN ? "HN" : "TN"}
+                {config.name}
               </span>
               <span
                 onClick={(e) => {
                   e.stopPropagation();
-                  window.open(
-                    isHN
-                      ? `https://news.ycombinator.com/user?id=${item.author}`
-                      : `https://www.tabnews.com.br/${item.author}`,
-                    "_blank",
-                  );
+                  window.open(config.getUserUrl(item.author), "_blank");
                 }}
                 className="hover:text-slate-400 hover:underline transition-colors cursor-pointer"
               >
@@ -91,11 +132,11 @@ export default function NewsCard({ item, onClick }: NewsCardProps) {
               <button
                 onClick={handleCommentClick}
                 className={`flex items-center gap-1.5 transition-colors ${
-                  isHN
+                  !config.canOpenModal
                     ? "opacity-50 cursor-not-allowed"
                     : "hover:text-slate-400"
                 }`}
-                title={isHN ? "Abrir discussão" : "Ler comentários"}
+                title={config.commentActionTitle}
               >
                 <MessageCircle size={14} />
                 <span>{item.commentCount || 0}</span>

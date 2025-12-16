@@ -1,6 +1,7 @@
 export enum Source {
   TabNews = "TabNews",
   HackerNews = "HackerNews",
+  DevTo = "DevTo",
 }
 
 export type NewsOrHighlight =

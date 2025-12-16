@@ -13,6 +13,7 @@ import SkeletonHighlightCard from "./components/SkeletonHighlightCard";
 import Modal from "./components/Modal";
 import ErrorState from "./components/ErrorState";
 import SearchBar from "./components/SearchBar";
+import RankingInfoModal from "./components/RankingInfoModal";
 import {
   ViewMode,
   NewsItem,
@@ -24,7 +25,6 @@ import {
   fetchSmartMix,
   fetchTabNews,
   fetchHackerNews,
-  fetchHighlights,
   fetchFeed,
 } from "./services/api";
 
@@ -38,6 +38,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<NewsItem | null>(null);
+  const [rankingInfoItem, setRankingInfoItem] = useState<NewsItem | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const lastItemRef = useRef<HTMLDivElement>(null); // Ref for the last item in the main feed
@@ -226,6 +227,14 @@ export default function App() {
     setRefreshTrigger((prev) => prev + 1);
   };
 
+  const handleScoreClick = (item: NewsItem) => {
+    setRankingInfoItem(item);
+  };
+
+  const handleCloseRankingModal = () => {
+    setRankingInfoItem(null);
+  };
+
   // Filter items based on search query
   const filteredItems = useMemo(() => {
     if (!searchQuery.trim()) {
@@ -369,7 +378,11 @@ export default function App() {
                       key={`news-${item.id}`}
                       ref={shouldAttachRef ? lastItemRef : undefined}
                     >
-                      <NewsCard item={item} onClick={setSelectedItem} />
+                      <NewsCard
+                        item={item}
+                        onClick={setSelectedItem}
+                        onScoreClick={handleScoreClick}
+                      />
                     </div>
                   );
                 }
@@ -381,7 +394,11 @@ export default function App() {
                   key={`${(item as NewsItem).source}-${(item as NewsItem).id}`}
                   ref={shouldAttachRef ? lastItemRef : undefined}
                 >
-                  <NewsCard item={item as NewsItem} onClick={setSelectedItem} />
+                  <NewsCard
+                    item={item as NewsItem}
+                    onClick={setSelectedItem}
+                    onScoreClick={handleScoreClick}
+                  />
                 </div>
               );
             })}
@@ -422,6 +439,14 @@ export default function App() {
         onClose={() => setSelectedItem(null)}
         item={selectedItem}
       />
+
+      {/* Ranking Info Modal */}
+      {rankingInfoItem && (
+        <RankingInfoModal
+          item={rankingInfoItem}
+          onClose={handleCloseRankingModal}
+        />
+      )}
     </div>
   );
 }
