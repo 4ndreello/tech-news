@@ -78,12 +78,7 @@ function StatusContent({
                 </span>
                 <div className="flex items-center gap-2">
                   {source.ok ? (
-                    <>
-                      <span className="text-xs text-slate-500">
-                        {source.itemCount} itens
-                      </span>
-                      <span className="w-2 h-2 rounded-full bg-green-500" />
-                    </>
+                    <span className="w-2 h-2 rounded-full bg-green-500" />
                   ) : (
                     <>
                       <span className="text-xs text-red-400 max-w-[100px] truncate" title={source.error || "Erro"}>

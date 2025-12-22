@@ -166,7 +166,6 @@ export type FeedItem =
 export interface SourceStatus {
   name: string;
   ok: boolean;
-  itemCount: number;
   error?: string;
 }
 
