@@ -25,3 +25,14 @@ export const timeAgo = (dateString: string): string => {
   }
   return "agora mesmo";
 };
+
+export const formatFullDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};

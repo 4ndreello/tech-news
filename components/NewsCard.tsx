@@ -1,7 +1,7 @@
 import React from "react";
 import { MessageCircle } from "lucide-react";
 import { NewsItem, Source } from "../types";
-import { timeAgo } from "../utils/date";
+import { timeAgo, formatFullDate } from "../utils/date";
 
 interface NewsCardProps {
   item: NewsItem;
@@ -128,7 +128,9 @@ export default function NewsCard({
                 {item.author}
               </span>
               <span>·</span>
-              <span>{timeAgo(item.publishedAt)}</span>
+              <span title={formatFullDate(item.publishedAt)}>
+                {timeAgo(item.publishedAt)}
+              </span>
               <button
                 onClick={handleCommentClick}
                 className={`flex items-center gap-1.5 transition-colors ${

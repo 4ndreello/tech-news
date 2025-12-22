@@ -7,7 +7,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { Highlight } from "../types";
-import { timeAgo } from "../utils/date";
+import { timeAgo, formatFullDate } from "../utils/date";
 
 interface HighlightCardProps {
   highlight: Highlight;
@@ -97,7 +97,9 @@ export default function HighlightCard({ highlight }: HighlightCardProps) {
                 @{highlight.author}
               </span>
               <span>·</span>
-              <span>{timeAgo(highlight.publishedAt)}</span>
+              <span title={formatFullDate(highlight.publishedAt)}>
+                {timeAgo(highlight.publishedAt)}
+              </span>
               <div className="flex items-center gap-1.5">
                 <MessageCircle size={14} />
                 <span>{formatEngagement()}</span>
