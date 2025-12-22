@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Activity, ChevronDown } from "lucide-react";
-import { ServiceStatus, ServiceStatusType } from "../types";
+import { Signal, ChevronDown, CloudOff, Check, X } from "lucide-react";
+import { ServiceStatus, ServiceStatusType, SourceStatus } from "../types";
 import { fetchServiceStatus } from "../services/api";
 
 const getStatusColor = (status: ServiceStatusType): string => {
@@ -29,7 +29,114 @@ const getStatusText = (status: ServiceStatusType): string => {
   }
 };
 
-export default function ServiceStatusWidget() {
+interface ServiceStatusWidgetProps {
+  feedSources?: SourceStatus[];
+}
+
+// Shared content component for both desktop dropdown and mobile bottom sheet
+function StatusContent({ 
+  feedSources, 
+  services, 
+  onClose 
+}: { 
+  feedSources?: SourceStatus[]; 
+  services: ServiceStatus[];
+  onClose?: () => void;
+}) {
+  return (
+    <>
+      {/* Mobile Header with close button */}
+      {onClose && (
+        <div className="md:hidden flex items-center justify-between p-4 border-b border-slate-800/50">
+          <h2 className="text-lg font-semibold text-white">Status</h2>
+          <button
+            onClick={onClose}
+            className="p-1 rounded-lg hover:bg-white/5 text-slate-400"
+          >
+            <X size={20} />
+          </button>
+        </div>
+      )}
+
+      {/* Feed Sources Section */}
+      {feedSources && feedSources.length > 0 && (
+        <>
+          <div className="p-3 border-b border-slate-800/50">
+            <h3 className="text-sm font-semibold text-white">
+              Fontes do Feed
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">Último carregamento</p>
+          </div>
+          <div className="p-2 border-b border-slate-800/50">
+            {feedSources.map((source) => (
+              <div
+                key={source.name}
+                className="flex items-center justify-between px-3 py-2 rounded"
+              >
+                <span className="text-sm text-slate-300">
+                  {source.name}
+                </span>
+                <div className="flex items-center gap-2">
+                  {source.ok ? (
+                    <>
+                      <span className="text-xs text-slate-500">
+                        {source.itemCount} itens
+                      </span>
+                      <span className="w-2 h-2 rounded-full bg-green-500" />
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-xs text-red-400 max-w-[100px] truncate" title={source.error || "Erro"}>
+                        {source.error || "Erro"}
+                      </span>
+                      <span className="w-2 h-2 rounded-full bg-red-500" />
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+      
+      {/* External Services Section */}
+      {services.length > 0 && (
+        <>
+          <div className="p-3 border-b border-slate-800/50">
+            <h3 className="text-sm font-semibold text-white">
+              Status dos Serviços
+            </h3>
+          </div>
+          <div className="p-2 max-h-80 overflow-y-auto">
+            {services.map((service) => (
+              <a
+                key={service.name}
+                href={service.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between px-3 py-2 hover:bg-white/5 rounded transition-colors cursor-pointer"
+              >
+                <span className="text-sm text-slate-300 hover:text-white transition-colors">
+                  {service.name}
+                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-500">
+                    {getStatusText(service.status)}
+                  </span>
+                  <span
+                    className={`w-2 h-2 rounded-full ${getStatusColor(service.status)}`}
+                  />
+                </div>
+              </a>
+            ))}
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
+export default function ServiceStatusWidget({ feedSources }: ServiceStatusWidgetProps) {
   const [services, setServices] = useState<ServiceStatus[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -48,23 +155,23 @@ export default function ServiceStatusWidget() {
     };
 
     loadStatus();
-    // Atualizar a cada 5 minutos
     const interval = setInterval(loadStatus, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
-  if (loading || services.length === 0) return null;
-
-  // Determinar status geral (pior status entre todos os serviços)
+  // Determinar status geral
   const hasDown = services.some((s) => s.status === ServiceStatusType.Down);
-  const hasDegraded = services.some(
-    (s) => s.status === ServiceStatusType.Degraded,
-  );
-  const overallStatus = hasDown
+  const hasDegraded = services.some((s) => s.status === ServiceStatusType.Degraded);
+  const hasFeedError = feedSources?.some((s) => !s.ok) || false;
+  
+  const overallStatus = hasDown || hasFeedError
     ? ServiceStatusType.Down
     : hasDegraded
       ? ServiceStatusType.Degraded
       : ServiceStatusType.Operational;
+
+  if (loading && !feedSources?.length) return null;
+  if (services.length === 0 && !feedSources?.length) return null;
 
   return (
     <div className="relative">
@@ -72,10 +179,8 @@ export default function ServiceStatusWidget() {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-3 py-1.5 rounded hover:bg-white/5 transition-colors text-sm text-slate-400 hover:text-slate-300"
       >
-        <Activity size={14} />
-        <span
-          className={`w-2 h-2 rounded-full ${getStatusColor(overallStatus)}`}
-        />
+        <Signal size={14} />
+        <span className={`w-2 h-2 rounded-full ${getStatusColor(overallStatus)}`} />
         <ChevronDown
           size={14}
           className={`transition-transform ${isOpen ? "rotate-180" : ""}`}
@@ -84,38 +189,30 @@ export default function ServiceStatusWidget() {
 
       {isOpen && (
         <>
+          {/* Backdrop */}
           <div
-            className="fixed inset-0 z-40"
+            className="fixed inset-0 z-40 bg-black/50 md:bg-transparent"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute right-0 mt-2 w-72 bg-[#0f172a] border border-slate-800/50 rounded-lg shadow-xl z-50 overflow-hidden">
-            <div className="p-3 border-b border-slate-800/50">
-              <h3 className="text-sm font-semibold text-white">
-                Status dos Serviços
-              </h3>
+          
+          {/* Desktop Dropdown */}
+          <div className="hidden md:block absolute right-0 mt-2 w-72 bg-[#0f172a] border border-slate-800/50 rounded-lg shadow-xl z-50 overflow-hidden">
+            <StatusContent feedSources={feedSources} services={services} />
+          </div>
+
+          {/* Mobile Bottom Sheet */}
+          <div className="md:hidden fixed inset-x-0 bottom-0 z-50 bg-[#0f172a] rounded-t-2xl shadow-xl animate-slide-up">
+            {/* Drag indicator */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 bg-slate-700 rounded-full" />
             </div>
-            <div className="p-2 max-h-80 overflow-y-auto">
-              {services.map((service) => (
-                <a
-                  key={service.name}
-                  href={service.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-between px-3 py-2 hover:bg-white/5 rounded transition-colors cursor-pointer"
-                >
-                  <span className="text-sm text-slate-300 hover:text-white transition-colors">
-                    {service.name}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-500">
-                      {getStatusText(service.status)}
-                    </span>
-                    <span
-                      className={`w-2 h-2 rounded-full ${getStatusColor(service.status)}`}
-                    />
-                  </div>
-                </a>
-              ))}
+            {/* Scrollable content with max height */}
+            <div className="max-h-[calc(80vh-3rem)] overflow-y-scroll pb-6 -webkit-overflow-scrolling-touch">
+              <StatusContent 
+                feedSources={feedSources} 
+                services={services} 
+                onClose={() => setIsOpen(false)} 
+              />
             </div>
           </div>
         </>

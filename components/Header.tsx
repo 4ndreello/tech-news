@@ -1,14 +1,15 @@
 import React, { useState } from "react";
-import { ViewMode } from "../types";
+import { ViewMode, SourceStatus } from "../types";
 import ServiceStatusWidget from "./ServiceStatus";
 import { Menu, X } from "lucide-react";
 
 interface HeaderProps {
   currentView: ViewMode;
   onViewChange: (view: ViewMode) => void;
+  feedSources?: SourceStatus[];
 }
 
-export default function Header({ currentView, onViewChange }: HeaderProps) {
+export default function Header({ currentView, onViewChange, feedSources }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navItems = [
     { id: "mix", label: "Top" },
@@ -65,7 +66,7 @@ export default function Header({ currentView, onViewChange }: HeaderProps) {
 
           {/* Service Status Widget */}
           <div className="ml-4 hidden md:block">
-            <ServiceStatusWidget />
+            <ServiceStatusWidget feedSources={feedSources} />
           </div>
         </div>
 
@@ -100,6 +101,11 @@ export default function Header({ currentView, onViewChange }: HeaderProps) {
                   );
                 })}
               </nav>
+              
+              {/* Service Status in Mobile Menu */}
+              <div className="mt-6 pt-4 border-t border-slate-800/50">
+                <ServiceStatusWidget feedSources={feedSources} />
+              </div>
             </div>
           </div>
         )}

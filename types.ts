@@ -2,6 +2,7 @@ export enum Source {
   TabNews = "TabNews",
   HackerNews = "HackerNews",
   DevTo = "DevTo",
+  Lobsters = "Lobsters",
 }
 
 export type NewsOrHighlight =
@@ -144,7 +145,7 @@ export interface Highlight {
   id: string;
   title: string;
   summary: string; // AI resume in 1-2 lines
-  source: "twitter" | "reddit" | "devto";
+  source: Source;
   author: string;
   url: string;
   engagement: {
@@ -161,8 +162,17 @@ export type FeedItem =
   | ({ type: "news" } & NewsItem)
   | ({ type: "highlight" } & Highlight);
 
+// Feed source status (per-request health)
+export interface SourceStatus {
+  name: string;
+  ok: boolean;
+  itemCount: number;
+  error?: string;
+}
+
 // Response from /api/feed endpoint
 export interface FeedResponse {
   items: FeedItem[];
   nextCursor: string | null;
+  sources?: SourceStatus[];
 }

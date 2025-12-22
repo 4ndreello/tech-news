@@ -9,7 +9,7 @@ interface NewsCardProps {
   onScoreClick: (item: NewsItem) => void;
 }
 
-const sourceConfig = {
+const sourceConfig: Record<Source, any> = {
   [Source.HackerNews]: {
     name: "HACKERNEWS",
     badgeStyles: "bg-orange-500/10 text-orange-400",
@@ -36,6 +36,14 @@ const sourceConfig = {
     getUserUrl: (author: string) => `https://dev.to/${author}`,
     canOpenModal: false,
     commentActionTitle: "Ver no Dev.to",
+  },
+  [Source.Lobsters]: {
+    name: "LOBSTERS",
+    badgeStyles: "bg-[#500500]/30 text-[#fff]",
+    getMainLink: (item: NewsItem) => item.url!,
+    getUserUrl: (author: string) => `https://lobsters.org/user/${author}`,
+    canOpenModal: false,
+    commentActionTitle: "Ver no Lobsters",
   },
 };
 

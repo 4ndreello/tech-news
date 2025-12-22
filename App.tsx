@@ -1,32 +1,28 @@
-import React, {
-  useState,
+import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
-  useCallback,
+  useState,
 } from "react";
-import Header from "./components/Header";
-import NewsCard from "./components/NewsCard";
-import HighlightCard from "./components/HighlightCard";
-import SkeletonCard from "./components/SkeletonCard";
-import SkeletonHighlightCard from "./components/SkeletonHighlightCard";
-import Modal from "./components/Modal";
 import ErrorState from "./components/ErrorState";
-import SearchBar from "./components/SearchBar";
+import Header from "./components/Header";
+import Modal from "./components/Modal";
+import NewsCard from "./components/NewsCard";
 import RankingInfoModal from "./components/RankingInfoModal";
+import SearchBar from "./components/SearchBar";
+import SkeletonCard from "./components/SkeletonCard";
 import {
-  ViewMode,
-  NewsItem,
-  Highlight,
-  NewsOrHighlight,
-  FeedItem,
-} from "./types";
-import {
-  fetchSmartMix,
-  fetchTabNews,
-  fetchHackerNews,
   fetchFeed,
+  fetchHackerNews,
+  fetchTabNews
 } from "./services/api";
+import {
+  FeedItem,
+  NewsItem,
+  SourceStatus,
+  ViewMode
+} from "./types";
 
 export default function App() {
   const [view, setView] = useState<ViewMode>("mix");
@@ -35,6 +31,7 @@ export default function App() {
   const [mixNextCursor, setMixNextCursor] = useState<string | null>(null); // New state for mix pagination
   const [hasMoreMixItems, setHasMoreMixItems] = useState(false); // New state for mix pagination
   const [loadingMoreMixItems, setLoadingMoreMixItems] = useState(false); // New state for mix pagination
+  const [feedSources, setFeedSources] = useState<SourceStatus[]>([]); // Track feed sources status
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<NewsItem | null>(null);
@@ -68,6 +65,7 @@ export default function App() {
               temMais: !!feedResponse.nextCursor,
             });
             setFeedItems(feedResponse.items);
+            setFeedSources(feedResponse.sources || []);
             newMixNextCursor = feedResponse.nextCursor;
             newHasMoreMix = !!feedResponse.nextCursor;
             setLoadingMoreMixItems(false);
@@ -302,6 +300,7 @@ export default function App() {
           setView(v);
           setSearchQuery(""); // Reset search when changing tabs
         }}
+        feedSources={view === "mix" ? feedSources : undefined}
       />
 
       {/* Main Content */}
@@ -351,14 +350,7 @@ export default function App() {
 
               // For mix view, items come with type field from backend
               if (view === "mix" && "type" in item) {
-                if (item.type === "highlight") {
-                  return (
-                    <HighlightCard
-                      key={`highlight-${item.id}`}
-                      highlight={item}
-                    />
-                  );
-                } else if (item.type === "news") {
+                if (item.type === "news") {
                   return (
                     <div
                       key={`news-${item.id}`}
