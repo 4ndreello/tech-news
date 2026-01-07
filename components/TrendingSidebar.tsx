@@ -72,7 +72,7 @@ export default function TrendingSidebar({ onKeywordClick }: TrendingSidebarProps
   };
 
   useEffect(() => {
-    loadTrending();
+    loadTrending(false, true);
     const interval = setInterval(() => loadTrending(true, true), 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, [period]);
