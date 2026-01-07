@@ -5,6 +5,9 @@ import {
   Highlight,
   FeedResponse,
   NewsResponse,
+  TrendingResponse,
+  TrendingPeriod,
+  AnalyticsStatsResponse,
 } from "../types";
 
 const API_BASE_URL =
@@ -43,6 +46,10 @@ const setCachedData = <T>(key: string, data: T): void => {
     data,
     timestamp: Date.now(),
   });
+};
+
+const invalidateCache = (key: string): void => {
+  cache.delete(key);
 };
 
 export const fetchTabNews = async (): Promise<NewsItem[]> => {
@@ -204,7 +211,6 @@ export const fetchServiceStatus = async (): Promise<ServicesStatusResponse> => {
   return request;
 };
 
-// Fetch unified feed (news + highlights intercalados)
 export const fetchFeed = async (
   limit: number = 10,
   after?: string,
@@ -240,4 +246,116 @@ export const fetchFeed = async (
 
   inflightRequests.set(cacheKey, request);
   return request;
+};
+
+export const fetchTrending = async (
+  period: TrendingPeriod = "7d",
+  skipCache = false,
+): Promise<TrendingResponse> => {
+  const cacheKey = `trending-${period}`;
+
+  if (skipCache) {
+    invalidateCache(cacheKey);
+  }
+
+  const cached = getCachedData<TrendingResponse>(cacheKey);
+  if (cached) return cached;
+
+  const inflight = inflightRequests.get(cacheKey);
+  if (inflight) return inflight;
+
+  const request = (async () => {
+    try {
+      let url = `${API_BASE_URL}/analytics/trending?period=${period}`;
+      if (skipCache) {
+        url += `&_t=${Date.now()}`;
+      }
+      const res = await fetch(url);
+      if (!res.ok) {
+        const error = await res
+          .json()
+          .catch(() => ({ error: "Falha ao carregar trending" }));
+        throw new Error(error.error || "Falha ao carregar trending");
+      }
+      const data = await res.json();
+      setCachedData(cacheKey, data);
+      return data;
+    } finally {
+      inflightRequests.delete(cacheKey);
+    }
+  })();
+
+  inflightRequests.set(cacheKey, request);
+  return request;
+};
+
+export const fetchAnalyticsStats = async (
+  skipCache = false,
+): Promise<AnalyticsStatsResponse> => {
+  const cacheKey = "analytics-stats";
+
+  if (skipCache) {
+    invalidateCache(cacheKey);
+  }
+
+  const cached = getCachedData<AnalyticsStatsResponse>(cacheKey);
+  if (cached) return cached;
+
+  const inflight = inflightRequests.get(cacheKey);
+  if (inflight) return inflight;
+
+  const request = (async () => {
+    try {
+      let url = `${API_BASE_URL}/analytics/stats`;
+      if (skipCache) {
+        url += `?_t=${Date.now()}`;
+      }
+      const res = await fetch(url);
+      if (!res.ok) {
+        const error = await res
+          .json()
+          .catch(() => ({ error: "Falha ao carregar analytics" }));
+        throw new Error(error.error || "Falha ao carregar analytics");
+      }
+      const data = await res.json();
+      setCachedData(cacheKey, data);
+      return data;
+    } finally {
+      inflightRequests.delete(cacheKey);
+    }
+  })();
+
+  inflightRequests.set(cacheKey, request);
+  return request;
+};
+
+const HISTORY_STORAGE_KEY = "technews-analytics-history";
+
+export const saveStatsToHistory = (stats: AnalyticsStatsResponse): void => {
+  const today = new Date().toISOString().split("T")[0];
+  const history: Record<string, AnalyticsStatsResponse> = JSON.parse(
+    localStorage.getItem(HISTORY_STORAGE_KEY) || "{}",
+  );
+  history[today] = stats;
+
+  const sortedDates = Object.keys(history).sort().reverse();
+  const trimmedHistory: Record<string, AnalyticsStatsResponse> = {};
+  sortedDates.slice(0, 30).forEach((date) => {
+    trimmedHistory[date] = history[date];
+  });
+
+  localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(trimmedHistory));
+};
+
+export const getStatsHistory = (
+  days: number = 30,
+): Array<{ date: string; stats: AnalyticsStatsResponse }> => {
+  const history: Record<string, AnalyticsStatsResponse> = JSON.parse(
+    localStorage.getItem(HISTORY_STORAGE_KEY) || "{}",
+  );
+
+  return Object.entries(history)
+    .sort(([a], [b]) => b.localeCompare(a))
+    .slice(0, days)
+    .map(([date, stats]) => ({ date, stats }));
 };

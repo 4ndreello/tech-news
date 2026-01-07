@@ -175,3 +175,75 @@ export interface FeedResponse {
   nextCursor: string | null;
   sources?: SourceStatus[];
 }
+
+export type TrendingPeriod = "24h" | "7d" | "30d";
+
+export interface TrendingTopArticle {
+  id: string;
+  title: string;
+  score: number;
+  source: string;
+}
+
+export interface TrendingTopic {
+  keyword: string;
+  count: number;
+  avgScore: number;
+  sources: string[];
+  topArticles: TrendingTopArticle[];
+}
+
+export interface SourceStat {
+  source: string;
+  totalArticles: number;
+  avgScore: number;
+  topKeywords: string[];
+}
+
+export interface TrendingResponse {
+  period: TrendingPeriod;
+  generatedAt: string;
+  trending: TrendingTopic[];
+  sourceStats: SourceStat[];
+  totalProcessed: number;
+}
+
+export interface ProcessingStepStats {
+  total: number;
+  successful: number;
+  failed: number;
+  avgDuration: number;
+}
+
+export interface WarehouseStats {
+  rawCount: number;
+  enrichedCount: number;
+  rankedCount: number;
+  mixedCount: number;
+  logsCount?: number;
+  oldestRecord: string;
+  newestRecord: string;
+}
+
+export interface ProcessingStats {
+  fetch: ProcessingStepStats;
+  enrich: ProcessingStepStats;
+  rank: ProcessingStepStats;
+  mix: ProcessingStepStats;
+}
+
+export interface AnalyticsStatsResponse {
+  warehouse: WarehouseStats;
+  processing: ProcessingStats;
+  generatedAt: string;
+}
+
+export interface EnrichedNewsItem extends NewsItem {
+  techScore?: number;
+  keywords?: string[];
+  isTechNews?: boolean;
+}
+
+export type EnrichedFeedItem =
+  | ({ type: "news" } & EnrichedNewsItem)
+  | ({ type: "highlight" } & Highlight);

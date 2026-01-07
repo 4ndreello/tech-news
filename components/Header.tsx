@@ -1,15 +1,23 @@
 import React, { useState } from "react";
 import { ViewMode, SourceStatus } from "../types";
 import ServiceStatusWidget from "./ServiceStatus";
-import { Menu, X } from "lucide-react";
+import { Menu, X, BarChart3 } from "lucide-react";
 
 interface HeaderProps {
   currentView: ViewMode;
   onViewChange: (view: ViewMode) => void;
   feedSources?: SourceStatus[];
+  showDashboard?: boolean;
+  onDashboardClick?: () => void;
 }
 
-export default function Header({ currentView, onViewChange, feedSources }: HeaderProps) {
+export default function Header({ 
+  currentView, 
+  onViewChange, 
+  feedSources,
+  showDashboard = false,
+  onDashboardClick,
+}: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navItems = [
     { id: "mix", label: "Top" },
@@ -33,9 +41,9 @@ export default function Header({ currentView, onViewChange, feedSources }: Heade
         {/* Navigation / Mobile Menu Toggle */}
         <div className="flex items-center">
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-12 ml-8">
+          <nav className="hidden md:flex items-center gap-8 ml-8">
             {navItems.map((item) => {
-              const isActive = currentView === item.id;
+              const isActive = currentView === item.id && !showDashboard;
 
               return (
                 <button
@@ -54,6 +62,23 @@ export default function Header({ currentView, onViewChange, feedSources }: Heade
                 </button>
               );
             })}
+            
+            <div className="w-px h-4 bg-slate-700" />
+            
+            <button
+              onClick={onDashboardClick}
+              className={`
+                flex items-center gap-1.5 text-sm font-medium transition-colors
+                ${
+                  showDashboard
+                    ? "text-white"
+                    : "text-slate-500 hover:text-slate-300"
+                }
+              `}
+            >
+              <BarChart3 size={16} />
+              Dashboard
+            </button>
           </nav>
 
           {/* Mobile Menu Button */}
@@ -82,7 +107,7 @@ export default function Header({ currentView, onViewChange, feedSources }: Heade
             >
               <nav className="flex flex-col gap-4">
                 {navItems.map((item) => {
-                  const isActive = currentView === item.id;
+                  const isActive = currentView === item.id && !showDashboard;
                   return (
                     <button
                       key={item.id}
@@ -100,6 +125,23 @@ export default function Header({ currentView, onViewChange, feedSources }: Heade
                     </button>
                   );
                 })}
+                
+                <div className="border-t border-slate-800/50 my-2" />
+                
+                <button
+                  onClick={() => {
+                    onDashboardClick?.();
+                    setIsMenuOpen(false);
+                  }}
+                  className={`flex items-center gap-2 text-left p-2 rounded-lg transition-colors text-lg font-medium ${
+                    showDashboard
+                      ? "bg-slate-700 text-white"
+                      : "text-slate-300 hover:bg-slate-800"
+                  }`}
+                >
+                  <BarChart3 size={20} />
+                  Dashboard
+                </button>
               </nav>
               
               {/* Service Status in Mobile Menu */}

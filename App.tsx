@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
 } from "react";
+import AnalyticsDashboard from "./components/AnalyticsDashboard";
 import ErrorState from "./components/ErrorState";
 import Header from "./components/Header";
 import Modal from "./components/Modal";
@@ -12,6 +13,7 @@ import NewsCard from "./components/NewsCard";
 import RankingInfoModal from "./components/RankingInfoModal";
 import SearchBar from "./components/SearchBar";
 import SkeletonCard from "./components/SkeletonCard";
+import TrendingSidebar from "./components/TrendingSidebar";
 import {
   fetchFeed,
   fetchHackerNews,
@@ -27,18 +29,24 @@ import {
 export default function App() {
   const [view, setView] = useState<ViewMode>("mix");
   const [items, setItems] = useState<NewsItem[]>([]);
-  const [feedItems, setFeedItems] = useState<FeedItem[]>([]); // New: unified feed items (news + highlights intercalados)
-  const [mixNextCursor, setMixNextCursor] = useState<string | null>(null); // New state for mix pagination
-  const [hasMoreMixItems, setHasMoreMixItems] = useState(false); // New state for mix pagination
-  const [loadingMoreMixItems, setLoadingMoreMixItems] = useState(false); // New state for mix pagination
-  const [feedSources, setFeedSources] = useState<SourceStatus[]>([]); // Track feed sources status
+  const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
+  const [mixNextCursor, setMixNextCursor] = useState<string | null>(null);
+  const [hasMoreMixItems, setHasMoreMixItems] = useState(false);
+  const [loadingMoreMixItems, setLoadingMoreMixItems] = useState(false);
+  const [feedSources, setFeedSources] = useState<SourceStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<NewsItem | null>(null);
   const [rankingInfoItem, setRankingInfoItem] = useState<NewsItem | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
-  const lastItemRef = useRef<HTMLDivElement>(null); // Ref for the last item in the main feed
+  const [showDashboard, setShowDashboard] = useState(false);
+  const lastItemRef = useRef<HTMLDivElement>(null);
+
+  const handleKeywordFilter = (keyword: string) => {
+    setSearchQuery(keyword);
+    setShowDashboard(false);
+  };
 
   useEffect(() => {
     let ignore = false;
@@ -293,132 +301,118 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#0f172a] text-slate-200 font-sans selection:bg-blue-500/30 flex flex-col">
-      {/* Header Navigation - Refresh button removed */}
       <Header
         currentView={view}
         onViewChange={(v) => {
           setView(v);
-          setSearchQuery(""); // Reset search when changing tabs
+          setSearchQuery("");
+          setShowDashboard(false);
         }}
         feedSources={view === "mix" ? feedSources : undefined}
+        showDashboard={showDashboard}
+        onDashboardClick={() => setShowDashboard(!showDashboard)}
       />
 
-      {/* Main Content */}
-      <main className="flex-1 w-full max-w-3xl mx-auto px-4 md:px-6 lg:px-8 py-6">
-        {/* Search Bar - Only show when not loading and has data */}
-        {!loading &&
-          !error &&
-          (view === "mix" ? feedItems.length > 0 : items.length > 0) && (
-            <SearchBar
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Buscar por título, autor ou conteúdo..."
-            />
-          )}
+      <div className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6">
+        <div className="flex gap-6">
+          <main className="flex-1 max-w-3xl">
+            {!loading &&
+              !error &&
+              !showDashboard &&
+              (view === "mix" ? feedItems.length > 0 : items.length > 0) && (
+                <SearchBar
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  placeholder="Buscar por título, autor ou conteúdo..."
+                />
+              )}
 
-        {error ? (
-          // Error State
-          <ErrorState message={error} onRetry={handleRefresh} />
-        ) : loading ? (
-          // Skeleton Loading State
-          <div className="space-y-0">
-            {(() => {
-              const skeletonItems = [];
-              const count = 10;
+            {showDashboard ? (
+              <AnalyticsDashboard />
+            ) : error ? (
+              <ErrorState message={error} onRetry={handleRefresh} />
+            ) : loading ? (
+              <div className="space-y-0">
+                {Array.from({ length: 10 }).map((_, i) => (
+                  <SkeletonCard key={`skeleton-${i}`} />
+                ))}
+              </div>
+            ) : itemsWithHighlights.length > 0 ? (
+              <div className="space-y-0">
+                {itemsWithHighlights.map((item: any, index) => {
+                  const shouldAttachRef = index === lastNewsIndex;
 
-              if (view === "mix") {
-                // Mix view: Apenas news skeletons, sem highlight
-                for (let i = 0; i < count; i++) {
-                  skeletonItems.push(<SkeletonCard key={`skeleton-${i}`} />);
-                }
-              } else {
-                // Other views: only news skeletons
-                for (let i = 0; i < count; i++) {
-                  skeletonItems.push(<SkeletonCard key={`skeleton-${i}`} />);
-                }
-              }
+                  if (view === "mix" && "type" in item) {
+                    if (item.type === "news") {
+                      return (
+                        <div
+                          key={`news-${item.id}`}
+                          ref={shouldAttachRef ? lastItemRef : undefined}
+                        >
+                          <NewsCard
+                            item={item}
+                            onClick={setSelectedItem}
+                            onScoreClick={handleScoreClick}
+                          />
+                        </div>
+                      );
+                    }
+                  }
 
-              return skeletonItems;
-            })()}
-          </div>
-        ) : // Data State
-        itemsWithHighlights.length > 0 ? (
-          <div className="space-y-0">
-            {itemsWithHighlights.map((item: any, index) => {
-              // Attach ref to the last NEWS item (not the last item overall)
-              const shouldAttachRef = index === lastNewsIndex;
-
-              // For mix view, items come with type field from backend
-              if (view === "mix" && "type" in item) {
-                if (item.type === "news") {
                   return (
                     <div
-                      key={`news-${item.id}`}
+                      key={`${(item as NewsItem).source}-${(item as NewsItem).id}`}
                       ref={shouldAttachRef ? lastItemRef : undefined}
                     >
                       <NewsCard
-                        item={item}
+                        item={item as NewsItem}
                         onClick={setSelectedItem}
                         onScoreClick={handleScoreClick}
                       />
                     </div>
                   );
-                }
-              }
-
-              // For other views, items are regular NewsItems
-              return (
-                <div
-                  key={`${(item as NewsItem).source}-${(item as NewsItem).id}`}
-                  ref={shouldAttachRef ? lastItemRef : undefined}
+                })}
+                {view === "mix" && hasMoreMixItems && loadingMoreMixItems && (
+                  <SkeletonCard key="loading-more-mix" />
+                )}
+              </div>
+            ) : (view === "mix" ? feedItems.length > 0 : items.length > 0) ? (
+              <div className="flex flex-col items-center justify-center py-20 text-slate-500">
+                <p className="text-lg">
+                  Nenhum resultado encontrado para "{searchQuery}"
+                </p>
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="mt-4 text-blue-400 hover:underline"
                 >
-                  <NewsCard
-                    item={item as NewsItem}
-                    onClick={setSelectedItem}
-                    onScoreClick={handleScoreClick}
-                  />
-                </div>
-              );
-            })}
-            {view === "mix" && hasMoreMixItems && loadingMoreMixItems && (
-              <SkeletonCard key="loading-more-mix" />
+                  Limpar busca
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-20 text-slate-500">
+                <p className="text-lg">Nenhuma notícia encontrada.</p>
+                <button
+                  onClick={handleRefresh}
+                  className="mt-4 text-blue-400 hover:underline"
+                >
+                  Tentar Novamente
+                </button>
+              </div>
             )}
-          </div>
-        ) : (view === "mix" ? feedItems.length > 0 : items.length > 0) ? (
-          // No results from search
-          <div className="flex flex-col items-center justify-center py-20 text-slate-500">
-            <p className="text-lg">
-              Nenhum resultado encontrado para "{searchQuery}"
-            </p>
-            <button
-              onClick={() => setSearchQuery("")}
-              className="mt-4 text-blue-400 hover:underline"
-            >
-              Limpar busca
-            </button>
-          </div>
-        ) : (
-          // Empty State
-          <div className="flex flex-col items-center justify-center py-20 text-slate-500">
-            <p className="text-lg">Nenhuma notícia encontrada.</p>
-            <button
-              onClick={handleRefresh}
-              className="mt-4 text-blue-400 hover:underline"
-            >
-              Tentar Novamente
-            </button>
-          </div>
-        )}
-      </main>
+          </main>
 
-      {/* TabNews Modal */}
+          <aside className="hidden lg:block w-80 flex-shrink-0">
+            <TrendingSidebar onKeywordClick={handleKeywordFilter} />
+          </aside>
+        </div>
+      </div>
+
       <Modal
         isOpen={!!selectedItem}
         onClose={() => setSelectedItem(null)}
         item={selectedItem}
       />
 
-      {/* Ranking Info Modal */}
       {rankingInfoItem && (
         <RankingInfoModal
           item={rankingInfoItem}

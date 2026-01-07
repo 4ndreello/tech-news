@@ -1,10 +1,12 @@
 import React from "react";
 import { MessageCircle } from "lucide-react";
-import { NewsItem, Source } from "../types";
+import { NewsItem, Source, EnrichedNewsItem } from "../types";
 import { timeAgo, formatFullDate } from "../utils/date";
 
+type NewsItemWithEnrichment = NewsItem & Partial<Pick<EnrichedNewsItem, "techScore" | "keywords">>;
+
 interface NewsCardProps {
-  item: NewsItem;
+  item: NewsItemWithEnrichment;
   onClick: (item: NewsItem) => void;
   onScoreClick: (item: NewsItem) => void;
 }
@@ -152,6 +154,19 @@ export default function NewsCard({
                 <span>{item.commentCount || 0}</span>
               </button>
             </div>
+
+            {item.keywords && item.keywords.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {item.keywords.slice(0, 3).map((keyword) => (
+                  <span
+                    key={keyword}
+                    className="text-xs px-1.5 py-0.5 rounded bg-slate-700/50 text-slate-400"
+                  >
+                    {keyword}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </a>
