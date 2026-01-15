@@ -40,7 +40,7 @@ export interface NewsItem {
   commentCount?: number;
 }
 
-export type ViewMode = "mix" | "tabnews" | "hackernews";
+export type ViewMode = "mix";
 
 // Service Status types
 export enum ServiceStatusType {

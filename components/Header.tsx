@@ -11,18 +11,16 @@ interface HeaderProps {
   onDashboardClick?: () => void;
 }
 
-export default function Header({ 
-  currentView, 
-  onViewChange, 
+export default function Header({
+  currentView,
+  onViewChange,
   feedSources,
   showDashboard = false,
   onDashboardClick,
 }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navItems = [
-    { id: "mix", label: "Top" },
-    { id: "tabnews", label: "TabNews" },
-    { id: "hackernews", label: "Hacker News" },
+    { id: "mix", label: "Home" },
   ];
 
   return (
@@ -51,10 +49,9 @@ export default function Header({
                   onClick={() => onViewChange(item.id as ViewMode)}
                   className={`
                     text-sm font-medium transition-colors
-                    ${
-                      isActive
-                        ? "text-white"
-                        : "text-slate-500 hover:text-slate-300"
+                    ${isActive
+                      ? "text-white"
+                      : "text-slate-500 hover:text-slate-300"
                     }
                   `}
                 >
@@ -62,17 +59,16 @@ export default function Header({
                 </button>
               );
             })}
-            
+
             <div className="w-px h-4 bg-slate-700" />
-            
+
             <button
               onClick={onDashboardClick}
               className={`
                 flex items-center gap-1.5 text-sm font-medium transition-colors
-                ${
-                  showDashboard
-                    ? "text-white"
-                    : "text-slate-500 hover:text-slate-300"
+                ${showDashboard
+                  ? "text-white"
+                  : "text-slate-500 hover:text-slate-300"
                 }
               `}
             >
@@ -115,35 +111,33 @@ export default function Header({
                         onViewChange(item.id as ViewMode);
                         setIsMenuOpen(false);
                       }}
-                      className={`text-left p-2 rounded-lg transition-colors text-lg font-medium ${
-                        isActive
-                          ? "bg-slate-700 text-white"
-                          : "text-slate-300 hover:bg-slate-800"
-                      }`}
+                      className={`text-left p-2 rounded-lg transition-colors text-lg font-medium ${isActive
+                        ? "bg-slate-700 text-white"
+                        : "text-slate-300 hover:bg-slate-800"
+                        }`}
                     >
                       {item.label}
                     </button>
                   );
                 })}
-                
+
                 <div className="border-t border-slate-800/50 my-2" />
-                
+
                 <button
                   onClick={() => {
                     onDashboardClick?.();
                     setIsMenuOpen(false);
                   }}
-                  className={`flex items-center gap-2 text-left p-2 rounded-lg transition-colors text-lg font-medium ${
-                    showDashboard
-                      ? "bg-slate-700 text-white"
-                      : "text-slate-300 hover:bg-slate-800"
-                  }`}
+                  className={`flex items-center gap-2 text-left p-2 rounded-lg transition-colors text-lg font-medium ${showDashboard
+                    ? "bg-slate-700 text-white"
+                    : "text-slate-300 hover:bg-slate-800"
+                    }`}
                 >
                   <BarChart3 size={20} />
                   Dashboard
                 </button>
               </nav>
-              
+
               {/* Service Status in Mobile Menu */}
               <div className="mt-6 pt-4 border-t border-slate-800/50">
                 <ServiceStatusWidget feedSources={feedSources} />

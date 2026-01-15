@@ -13,11 +13,8 @@ import NewsCard from "./components/NewsCard";
 import RankingInfoModal from "./components/RankingInfoModal";
 import SearchBar from "./components/SearchBar";
 import SkeletonCard from "./components/SkeletonCard";
-import TrendingSidebar from "./components/TrendingSidebar";
 import {
-  fetchFeed,
-  fetchHackerNews,
-  fetchTabNews
+  fetchFeed
 } from "./services/api";
 import {
   FeedItem,
@@ -43,10 +40,7 @@ export default function App() {
   const [showDashboard, setShowDashboard] = useState(false);
   const lastItemRef = useRef<HTMLDivElement>(null);
 
-  const handleKeywordFilter = (keyword: string) => {
-    setSearchQuery(keyword);
-    setShowDashboard(false);
-  };
+
 
   useEffect(() => {
     let ignore = false;
@@ -78,18 +72,7 @@ export default function App() {
             newHasMoreMix = !!feedResponse.nextCursor;
             setLoadingMoreMixItems(false);
             break;
-          case "tabnews":
-            fetchedNewsItems = await fetchTabNews();
-            setFeedItems([]); // Clear feed items when not in mix view
-            setMixNextCursor(null);
-            setHasMoreMixItems(false);
-            break;
-          case "hackernews":
-            fetchedNewsItems = await fetchHackerNews();
-            setFeedItems([]); // Clear feed items when not in mix view
-            setMixNextCursor(null);
-            setHasMoreMixItems(false);
-            break;
+
         }
 
         if (!ignore) {
@@ -314,8 +297,8 @@ export default function App() {
       />
 
       <div className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6">
-        <div className="flex gap-6">
-          <main className="flex-1 max-w-3xl">
+        <div>
+          <main className="max-w-3xl mx-auto">
             {!loading &&
               !error &&
               !showDashboard &&
@@ -400,10 +383,6 @@ export default function App() {
               </div>
             )}
           </main>
-
-          <aside className="hidden lg:block w-80 flex-shrink-0">
-            <TrendingSidebar onKeywordClick={handleKeywordFilter} />
-          </aside>
         </div>
       </div>
 
