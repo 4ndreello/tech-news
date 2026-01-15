@@ -2,11 +2,7 @@ import {
   NewsItem,
   Comment,
   ServicesStatusResponse,
-  Highlight,
   FeedResponse,
-  NewsResponse,
-  TrendingResponse,
-  TrendingPeriod,
   AnalyticsStatsResponse,
 } from "../types";
 
@@ -52,105 +48,7 @@ const invalidateCache = (key: string): void => {
   cache.delete(key);
 };
 
-export const fetchTabNews = async (): Promise<NewsItem[]> => {
-  const cacheKey = "tabnews";
 
-  // Verificar cache
-  const cached = getCachedData<NewsItem[]>(cacheKey);
-  if (cached) return cached;
-
-  // Verificar se já tem uma requisição em andamento
-  const inflight = inflightRequests.get(cacheKey);
-  if (inflight) return inflight;
-
-  // Criar nova requisição
-  const request = (async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/news/tabnews`);
-      if (!res.ok) {
-        const error = await res
-          .json()
-          .catch(() => ({ error: "Falha ao carregar TabNews" }));
-        throw new Error(error.error || "Falha ao carregar TabNews");
-      }
-      const data = await res.json();
-      setCachedData(cacheKey, data);
-      return data;
-    } finally {
-      inflightRequests.delete(cacheKey);
-    }
-  })();
-
-  inflightRequests.set(cacheKey, request);
-  return request;
-};
-
-export const fetchHackerNews = async (): Promise<NewsItem[]> => {
-  const cacheKey = "hackernews";
-
-  const cached = getCachedData<NewsItem[]>(cacheKey);
-  if (cached) return cached;
-
-  const inflight = inflightRequests.get(cacheKey);
-  if (inflight) return inflight;
-
-  const request = (async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/news/hackernews`);
-      if (!res.ok) {
-        const error = await res
-          .json()
-          .catch(() => ({ error: "Falha ao carregar Hacker News" }));
-        throw new Error(error.error || "Falha ao carregar Hacker News");
-      }
-      const data = await res.json();
-      setCachedData(cacheKey, data);
-      return data;
-    } finally {
-      inflightRequests.delete(cacheKey);
-    }
-  })();
-
-  inflightRequests.set(cacheKey, request);
-  return request;
-};
-
-export const fetchSmartMix = async (
-  limit: number = 10,
-  after?: string,
-): Promise<NewsResponse> => {
-  const params = new URLSearchParams();
-  params.append("limit", limit.toString());
-  if (after) params.append("after", after);
-
-  const cacheKey = `mix-${limit}-${after || "start"}`;
-
-  const cached = getCachedData<NewsResponse>(cacheKey);
-  if (cached) return cached;
-
-  const inflight = inflightRequests.get(cacheKey);
-  if (inflight) return inflight;
-
-  const request = (async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/news/mix?${params}`);
-      if (!res.ok) {
-        const error = await res
-          .json()
-          .catch(() => ({ error: "Falha ao carregar notícias" }));
-        throw new Error(error.error || "Falha ao carregar notícias");
-      }
-      const data = await res.json();
-      setCachedData(cacheKey, data);
-      return data;
-    } finally {
-      inflightRequests.delete(cacheKey);
-    }
-  })();
-
-  inflightRequests.set(cacheKey, request);
-  return request;
-};
 
 export const fetchTabNewsComments = async (
   username: string,
@@ -248,46 +146,7 @@ export const fetchFeed = async (
   return request;
 };
 
-export const fetchTrending = async (
-  period: TrendingPeriod = "7d",
-  skipCache = false,
-): Promise<TrendingResponse> => {
-  const cacheKey = `trending-${period}`;
 
-  if (skipCache) {
-    invalidateCache(cacheKey);
-  }
-
-  const cached = getCachedData<TrendingResponse>(cacheKey);
-  if (cached) return cached;
-
-  const inflight = inflightRequests.get(cacheKey);
-  if (inflight) return inflight;
-
-  const request = (async () => {
-    try {
-      let url = `${API_BASE_URL}/analytics/trending?period=${period}`;
-      if (skipCache) {
-        url += `&_t=${Date.now()}`;
-      }
-      const res = await fetch(url);
-      if (!res.ok) {
-        const error = await res
-          .json()
-          .catch(() => ({ error: "Falha ao carregar trending" }));
-        throw new Error(error.error || "Falha ao carregar trending");
-      }
-      const data = await res.json();
-      setCachedData(cacheKey, data);
-      return data;
-    } finally {
-      inflightRequests.delete(cacheKey);
-    }
-  })();
-
-  inflightRequests.set(cacheKey, request);
-  return request;
-};
 
 export const fetchAnalyticsStats = async (
   skipCache = false,

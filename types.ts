@@ -176,37 +176,7 @@ export interface FeedResponse {
   sources?: SourceStatus[];
 }
 
-export type TrendingPeriod = "24h" | "7d" | "30d";
 
-export interface TrendingTopArticle {
-  id: string;
-  title: string;
-  score: number;
-  source: string;
-}
-
-export interface TrendingTopic {
-  keyword: string;
-  count: number;
-  avgScore: number;
-  sources: string[];
-  topArticles: TrendingTopArticle[];
-}
-
-export interface SourceStat {
-  source: string;
-  totalArticles: number;
-  avgScore: number;
-  topKeywords: string[];
-}
-
-export interface TrendingResponse {
-  period: TrendingPeriod;
-  generatedAt: string;
-  trending: TrendingTopic[];
-  sourceStats: SourceStat[];
-  totalProcessed: number;
-}
 
 export interface ProcessingStepStats {
   total: number;
