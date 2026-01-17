@@ -47,6 +47,14 @@ const sourceConfig: Record<Source, any> = {
     canOpenModal: false,
     commentActionTitle: "Ver no Lobsters",
   },
+  [Source.Twitter]: {
+    name: "TWITTER",
+    badgeStyles: "bg-black text-white border border-slate-700",
+    getMainLink: (item: NewsItem) => item.url!,
+    getUserUrl: (author: string) => `https://twitter.com/${author}`,
+    canOpenModal: false,
+    commentActionTitle: "Ver no Twitter",
+  },
 };
 
 export default function NewsCard({
