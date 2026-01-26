@@ -1,13 +1,7 @@
 import { useEffect, useState } from "react";
 import {
-  Database,
-  Cpu,
-  Clock,
   RefreshCw,
-  CheckCircle,
   XCircle,
-  AlertTriangle,
-  Zap,
 } from "lucide-react";
 import { AnalyticsStatsResponse, ProcessingStepStats } from "../types";
 import { fetchAnalyticsStats, saveStatsToHistory } from "../services/api";
@@ -42,9 +36,8 @@ function getHealthColor(successRate: number): string {
 }
 
 function getHealthIcon(successRate: number) {
-  if (successRate >= 90) return <CheckCircle size={14} className="text-green-400" />;
-  if (successRate >= 70) return <AlertTriangle size={14} className="text-yellow-400" />;
-  return <XCircle size={14} className="text-red-400" />;
+  const color = successRate >= 90 ? "bg-green-400" : successRate >= 70 ? "bg-yellow-400" : "bg-red-400";
+  return <span className={`w-2 h-2 rounded-full ${color}`} />;
 }
 
 function ProcessingStep({ name, stats }: { name: string; stats: ProcessingStepStats }) {
@@ -129,10 +122,10 @@ export default function AnalyticsDashboard() {
   const { warehouse, processing, generatedAt } = data;
 
   const warehouseStats = [
-    { label: "Raw", value: warehouse.rawCount, icon: Database },
-    { label: "Enriched", value: warehouse.enrichedCount, icon: Zap },
-    { label: "Ranked", value: warehouse.rankedCount, icon: Cpu },
-    { label: "Mixed", value: warehouse.mixedCount, icon: CheckCircle },
+    { label: "Raw", value: warehouse.rawCount },
+    { label: "Enriched", value: warehouse.enrichedCount },
+    { label: "Ranked", value: warehouse.rankedCount },
+    { label: "Mixed", value: warehouse.mixedCount },
   ];
 
   return (
@@ -140,7 +133,6 @@ export default function AnalyticsDashboard() {
       <div className="bg-slate-900/30 rounded-lg border border-slate-800/50 p-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Database size={18} className="text-blue-400" />
             <h3 className="font-semibold text-slate-100">Warehouse</h3>
           </div>
           <button
@@ -153,13 +145,12 @@ export default function AnalyticsDashboard() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {warehouseStats.map(({ label, value, icon: Icon }) => (
+          {warehouseStats.map(({ label, value }) => (
             <div
               key={label}
               className="bg-slate-800/40 rounded-lg p-3 flex flex-col"
             >
               <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
-                <Icon size={12} />
                 {label}
               </div>
               <span className="text-2xl font-bold text-slate-100">
@@ -172,7 +163,6 @@ export default function AnalyticsDashboard() {
 
       <div className="bg-slate-900/30 rounded-lg border border-slate-800/50 p-4">
         <div className="flex items-center gap-2 mb-4">
-          <Cpu size={18} className="text-purple-400" />
           <h3 className="font-semibold text-slate-100">Pipeline Health</h3>
         </div>
 
@@ -186,7 +176,6 @@ export default function AnalyticsDashboard() {
 
       <div className="bg-slate-900/30 rounded-lg border border-slate-800/50 p-4">
         <div className="flex items-center gap-2 mb-3">
-          <Clock size={18} className="text-amber-400" />
           <h3 className="font-semibold text-slate-100">Performance</h3>
         </div>
 

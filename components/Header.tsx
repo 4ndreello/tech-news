@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { ViewMode, SourceStatus } from "../types";
 import ServiceStatusWidget from "./ServiceStatus";
-import { Menu, X, BarChart3 } from "lucide-react";
+import { Menu, X } from "lucide-react";
 
 interface HeaderProps {
   currentView: ViewMode;
@@ -72,7 +72,6 @@ export default function Header({
                 }
               `}
             >
-              <BarChart3 size={16} />
               Dashboard
             </button>
           </nav>
@@ -133,7 +132,6 @@ export default function Header({
                     : "text-slate-300 hover:bg-slate-800"
                     }`}
                 >
-                  <BarChart3 size={20} />
                   Dashboard
                 </button>
               </nav>
