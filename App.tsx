@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AnalyticsDashboard from "./components/AnalyticsDashboard";
 import ErrorState from "./components/ErrorState";
 import Header from "./components/Header";
@@ -15,15 +9,8 @@ import SearchBar from "./components/SearchBar";
 import SkeletonCard from "./components/SkeletonCard";
 import Toast from "./components/Toast";
 import KeyboardShortcutsHelp from "./components/KeyboardShortcutsHelp";
-import {
-  fetchFeed
-} from "./services/api";
-import {
-  FeedItem,
-  NewsItem,
-  SourceStatus,
-  ViewMode
-} from "./types";
+import { fetchFeed } from "./services/api";
+import { FeedItem, NewsItem, SourceStatus, ViewMode } from "./types";
 import { classifyError, ErrorType } from "./utils/errorHandler";
 import { useToast } from "./hooks/useToast";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
@@ -63,12 +50,10 @@ export default function App() {
 
   // SEO
   useSEO({
-    title: 'TechNews - Notícias de Tecnologia em Tempo Real',
+    title: "TechNews - Notícias de tecnologia",
     description:
-      'Agregador de notícias de tecnologia do Hacker News, TabNews, Dev.to, Lobsters e Twitter. Fique por dentro das últimas novidades em programação, desenvolvimento web e tecnologia.',
+      "Agregador de notícias de tecnologia do Hacker News, TabNews, Dev.to, Lobsters e Twitter. Fique por dentro das últimas novidades em programação, desenvolvimento web e tecnologia.",
   });
-
-
 
   useEffect(() => {
     let ignore = false;
@@ -100,7 +85,6 @@ export default function App() {
             newHasMoreMix = !!feedResponse.nextCursor;
             setLoadingMoreMixItems(false);
             break;
-
         }
 
         if (!ignore) {
@@ -126,7 +110,10 @@ export default function App() {
         }
       } catch (err) {
         if (!ignore) {
-          const error = err instanceof Error ? err : new Error("Não foi possível conectar ao servidor.");
+          const error =
+            err instanceof Error
+              ? err
+              : new Error("Não foi possível conectar ao servidor.");
           const type = classifyError(error);
           setErrorType(type);
           setError(error.message);
@@ -301,22 +288,22 @@ export default function App() {
   const handleOpenSelectedItem = useCallback(() => {
     const item = itemsWithHighlights[selectedIndex];
     if (item) {
-      if ('type' in item && item.type === 'news') {
-        const newsItem = item as NewsItem & { type: 'news' };
+      if ("type" in item && item.type === "news") {
+        const newsItem = item as NewsItem & { type: "news" };
         const mainLink =
           newsItem.url ||
-          (newsItem.source === 'TabNews'
+          (newsItem.source === "TabNews"
             ? `https://www.tabnews.com.br/${newsItem.owner_username}/${newsItem.slug}`
             : `https://news.ycombinator.com/item?id=${newsItem.id}`);
-        window.open(mainLink, '_blank');
+        window.open(mainLink, "_blank");
       } else {
         const newsItem = item as NewsItem;
         const mainLink =
           newsItem.url ||
-          (newsItem.source === 'TabNews'
+          (newsItem.source === "TabNews"
             ? `https://www.tabnews.com.br/${newsItem.owner_username}/${newsItem.slug}`
             : `https://news.ycombinator.com/item?id=${newsItem.id}`);
-        window.open(mainLink, '_blank');
+        window.open(mainLink, "_blank");
       }
     }
   }, [itemsWithHighlights, selectedIndex]);
@@ -405,7 +392,9 @@ export default function App() {
                             item={item}
                             onClick={setSelectedItem}
                             onScoreClick={handleScoreClick}
-                            onCopyLink={(url) => showToast('Link copiado!', 'success')}
+                            onCopyLink={(url) =>
+                              showToast("Link copiado!", "success")
+                            }
                             isSelected={index === selectedIndex}
                             selectedIndex={selectedIndex}
                             itemIndex={index}
@@ -424,7 +413,9 @@ export default function App() {
                         item={item as NewsItem}
                         onClick={setSelectedItem}
                         onScoreClick={handleScoreClick}
-                        onCopyLink={(url) => showToast('Link copiado!', 'success')}
+                        onCopyLink={(url) =>
+                          showToast("Link copiado!", "success")
+                        }
                         isSelected={index === selectedIndex}
                         selectedIndex={selectedIndex}
                         itemIndex={index}
@@ -478,7 +469,7 @@ export default function App() {
 
       {/* Toast container */}
       <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
-        {toasts.map(toast => (
+        {toasts.map((toast) => (
           <Toast
             key={toast.id}
             message={toast.message}
