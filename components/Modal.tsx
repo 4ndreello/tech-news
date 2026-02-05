@@ -18,24 +18,24 @@ const CommentTree = ({ comments }: { comments: Comment[] }) => {
   return (
     <div className="flex flex-col gap-6 mt-6">
       {comments.map((comment) => (
-        <div key={comment.id} className="pl-4 border-l border-slate-800">
-          <div className="flex items-center gap-3 mb-2 text-sm text-slate-500">
+        <div key={comment.id} className="pl-4 border-l border-slate-300 dark:border-slate-800">
+          <div className="flex items-center gap-3 mb-2 text-sm text-slate-600 dark:text-slate-500">
             <a
               href={`https://www.tabnews.com.br/${comment.owner_username}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium text-slate-300 hover:text-slate-200 hover:underline transition-colors"
+              className="font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-200 hover:underline transition-colors"
             >
               {comment.owner_username}
             </a>
             <span>·</span>
             <span>{timeAgo(comment.created_at)}</span>
             {comment.tabcoins !== undefined && comment.tabcoins > 0 && (
-              <span className="text-slate-400">{comment.tabcoins} pts</span>
+              <span className="text-slate-500 dark:text-slate-400">{comment.tabcoins} pts</span>
             )}
           </div>
 
-          <div className="markdown-body !text-base text-slate-300 mb-2">
+          <div className="markdown-body !text-base text-slate-700 dark:text-slate-300 mb-2">
             <ReactMarkdown>{comment.body}</ReactMarkdown>
           </div>
 
@@ -84,20 +84,20 @@ export default function Modal({ isOpen, onClose, item }: ModalProps) {
       />
 
       {/* Modal Content */}
-      <div className="relative w-full max-w-3xl max-h-[90vh] bg-[#0f172a] border border-slate-800/50 rounded-lg shadow-2xl overflow-hidden flex flex-col">
+      <div className="relative w-full max-w-3xl max-h-[90vh] bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800/50 rounded-lg shadow-2xl overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="p-6 border-b border-slate-800/50 flex-shrink-0">
+        <div className="p-6 border-b border-slate-200 dark:border-slate-800/50 flex-shrink-0">
           <div className="flex justify-between items-start gap-6">
             <div className="flex-1">
-              <h2 className="text-xl font-semibold text-white leading-snug mb-3">
+              <h2 className="text-xl font-semibold text-slate-900 dark:text-white leading-snug mb-3">
                 {item.title}
               </h2>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-500">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-500 dark:text-slate-500">
                 <a
                   href={`https://www.tabnews.com.br/${item.author}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-slate-400 hover:text-slate-300 hover:underline transition-colors"
+                  className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300 hover:underline transition-colors"
                 >
                   {item.author}
                 </a>
@@ -109,7 +109,7 @@ export default function Modal({ isOpen, onClose, item }: ModalProps) {
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-white/10 rounded transition-colors text-slate-400 hover:text-white flex-shrink-0"
+              className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded transition-colors text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex-shrink-0"
             >
               <X size={20} />
             </button>
@@ -120,25 +120,25 @@ export default function Modal({ isOpen, onClose, item }: ModalProps) {
         <div className="overflow-y-auto p-6 flex-1">
           {/* Post Body (if text post) */}
           {item.body && (
-            <div className="markdown-body text-slate-200 pb-8 mb-8 border-b border-slate-800/50">
+            <div className="markdown-body text-slate-800 dark:text-slate-200 pb-8 mb-8 border-b border-slate-200 dark:border-slate-800/50">
               <ReactMarkdown>{item.body}</ReactMarkdown>
             </div>
           )}
 
           {/* Comments Section */}
           <div>
-            <h3 className="text-lg font-semibold text-white mb-6">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-6">
               Comentários
             </h3>
 
             {loadingComments ? (
               <div className="flex justify-center py-10">
-                <Loader2 className="animate-spin text-slate-400" size={28} />
+                <Loader2 className="animate-spin text-slate-400 dark:text-slate-400" size={28} />
               </div>
             ) : comments.length > 0 ? (
               <CommentTree comments={comments} />
             ) : (
-              <p className="text-slate-500 text-base">
+              <p className="text-slate-500 dark:text-slate-500 text-base">
                 Nenhum comentário encontrado.
               </p>
             )}
@@ -146,12 +146,12 @@ export default function Modal({ isOpen, onClose, item }: ModalProps) {
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-800/50 flex justify-end">
+        <div className="p-4 border-t border-slate-200 dark:border-slate-800/50 flex justify-end">
           <a
             href={externalUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 px-4 py-2 text-blue-400 hover:text-blue-300 transition-colors text-sm"
+            className="flex items-center gap-2 px-4 py-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors text-sm"
           >
             <span>
               {item.sourceUrl ? "Acessar link original" : "Ver no TabNews"}
