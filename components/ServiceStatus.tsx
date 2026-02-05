@@ -47,11 +47,11 @@ function StatusContent({
     <>
       {/* Mobile Header with close button */}
       {onClose && (
-        <div className="md:hidden flex items-center justify-between p-4 border-b border-slate-800/50">
-          <h2 className="text-lg font-semibold text-white">Status</h2>
+        <div className="md:hidden flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800/50">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Status</h2>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg hover:bg-white/5 text-slate-400"
+            className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400"
           >
             <X size={20} />
           </button>
@@ -61,19 +61,19 @@ function StatusContent({
       {/* Feed Sources Section */}
       {feedSources && feedSources.length > 0 && (
         <>
-          <div className="p-3 border-b border-slate-800/50">
-            <h3 className="text-sm font-semibold text-white">
+          <div className="p-3 border-b border-slate-200 dark:border-slate-800/50">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
               Fontes do Feed
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">Último carregamento</p>
+            <p className="text-xs text-slate-500 dark:text-slate-500 mt-0.5">Último carregamento</p>
           </div>
-          <div className="p-2 border-b border-slate-800/50">
+          <div className="p-2 border-b border-slate-200 dark:border-slate-800/50">
             {feedSources.map((source) => (
               <div
                 key={source.name}
                 className="flex items-center justify-between px-3 py-2 rounded"
               >
-                <span className="text-sm text-slate-300">
+                <span className="text-sm text-slate-700 dark:text-slate-300">
                   {source.name}
                 </span>
                 <div className="flex items-center gap-2">
@@ -81,7 +81,7 @@ function StatusContent({
                     <span className="w-2 h-2 rounded-full bg-green-500" />
                   ) : (
                     <>
-                      <span className="text-xs text-red-400 max-w-[100px] truncate" title={source.error || "Erro"}>
+                      <span className="text-xs text-red-500 dark:text-red-400 max-w-[100px] truncate" title={source.error || "Erro"}>
                         {source.error || "Erro"}
                       </span>
                       <span className="w-2 h-2 rounded-full bg-red-500" />
@@ -97,8 +97,8 @@ function StatusContent({
       {/* External Services Section */}
       {services.length > 0 && (
         <>
-          <div className="p-3 border-b border-slate-800/50">
-            <h3 className="text-sm font-semibold text-white">
+          <div className="p-3 border-b border-slate-200 dark:border-slate-800/50">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
               Status dos Serviços
             </h3>
           </div>
@@ -109,13 +109,13 @@ function StatusContent({
                 href={service.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-between px-3 py-2 hover:bg-white/5 rounded transition-colors cursor-pointer"
+                className="flex items-center justify-between px-3 py-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded transition-colors cursor-pointer"
               >
-                <span className="text-sm text-slate-300 hover:text-white transition-colors">
+                <span className="text-sm text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
                   {service.name}
                 </span>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-slate-500 dark:text-slate-500">
                     {getStatusText(service.status)}
                   </span>
                   <span
@@ -165,21 +165,16 @@ export default function ServiceStatusWidget({ feedSources }: ServiceStatusWidget
       ? ServiceStatusType.Degraded
       : ServiceStatusType.Operational;
 
-  if (loading && !feedSources?.length) return null;
-  if (services.length === 0 && !feedSources?.length) return null;
-
+  // Always show the widget, even if loading or empty
   return (
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded hover:bg-white/5 transition-colors text-sm text-slate-400 hover:text-slate-300"
+        className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors"
+        title="Status dos serviços"
+        aria-label="Ver status dos serviços"
       >
-        <Signal size={14} />
         <span className={`w-2 h-2 rounded-full ${getStatusColor(overallStatus)}`} />
-        <ChevronDown
-          size={14}
-          className={`transition-transform ${isOpen ? "rotate-180" : ""}`}
-        />
       </button>
 
       {isOpen && (
@@ -191,15 +186,15 @@ export default function ServiceStatusWidget({ feedSources }: ServiceStatusWidget
           />
           
           {/* Desktop Dropdown */}
-          <div className="hidden md:block absolute right-0 mt-2 w-72 bg-[#0f172a] border border-slate-800/50 rounded-lg shadow-xl z-50 overflow-hidden">
+          <div className="hidden md:block absolute left-0 mt-2 w-72 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800/50 rounded-lg shadow-xl z-50 overflow-hidden">
             <StatusContent feedSources={feedSources} services={services} />
           </div>
 
           {/* Mobile Bottom Sheet */}
-          <div className="md:hidden fixed inset-x-0 bottom-0 z-50 bg-[#0f172a] rounded-t-2xl shadow-xl animate-slide-up">
+          <div className="md:hidden fixed inset-x-0 bottom-0 z-50 bg-white dark:bg-[#0f172a] rounded-t-2xl shadow-xl animate-slide-up">
             {/* Drag indicator */}
             <div className="flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1 bg-slate-700 rounded-full" />
+              <div className="w-10 h-1 bg-slate-300 dark:bg-slate-700 rounded-full" />
             </div>
             {/* Scrollable content with max height */}
             <div className="max-h-[calc(80vh-3rem)] overflow-y-scroll pb-6 -webkit-overflow-scrolling-touch">

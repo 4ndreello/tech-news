@@ -11,17 +11,17 @@ function SkeletonLoader() {
     <div className="space-y-6 animate-pulse">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="bg-slate-800/50 rounded-lg p-4">
-            <div className="h-3 bg-slate-700/50 rounded w-16 mb-2" />
-            <div className="h-8 bg-slate-700/50 rounded w-12" />
+          <div key={i} className="bg-slate-200 dark:bg-slate-800/50 rounded-lg p-4">
+            <div className="h-3 bg-slate-300 dark:bg-slate-700/50 rounded w-16 mb-2" />
+            <div className="h-8 bg-slate-300 dark:bg-slate-700/50 rounded w-12" />
           </div>
         ))}
       </div>
-      <div className="bg-slate-800/50 rounded-lg p-4">
-        <div className="h-4 bg-slate-700/50 rounded w-32 mb-4" />
+      <div className="bg-slate-200 dark:bg-slate-800/50 rounded-lg p-4">
+        <div className="h-4 bg-slate-300 dark:bg-slate-700/50 rounded w-32 mb-4" />
         <div className="space-y-3">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-6 bg-slate-700/50 rounded" />
+            <div key={i} className="h-6 bg-slate-300 dark:bg-slate-700/50 rounded" />
           ))}
         </div>
       </div>
@@ -48,14 +48,14 @@ function ProcessingStep({ name, stats }: { name: string; stats: ProcessingStepSt
       <div className="flex items-center justify-between text-sm">
         <div className="flex items-center gap-2">
           {getHealthIcon(successRate)}
-          <span className="text-slate-200 capitalize">{name}</span>
+          <span className="text-slate-700 dark:text-slate-200 capitalize">{name}</span>
         </div>
-        <div className="flex items-center gap-3 text-slate-400">
+        <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400">
           <span>{successRate.toFixed(0)}%</span>
           <span className="text-xs">{stats.avgDuration}ms</span>
         </div>
       </div>
-      <div className="h-1.5 bg-slate-700/50 rounded-full overflow-hidden">
+      <div className="h-1.5 bg-slate-300 dark:bg-slate-700/50 rounded-full overflow-hidden">
         <div
           className={`h-full ${getHealthColor(successRate)} transition-all`}
           style={{ width: `${successRate}%` }}
@@ -96,7 +96,7 @@ export default function AnalyticsDashboard() {
 
   if (loading && !data) {
     return (
-      <div className="bg-slate-900/30 rounded-lg border border-slate-800/50 p-6">
+      <div className="bg-slate-100 dark:bg-slate-900/30 rounded-lg border border-slate-200 dark:border-slate-800/50 p-6">
         <SkeletonLoader />
       </div>
     );
@@ -104,12 +104,12 @@ export default function AnalyticsDashboard() {
 
   if (error) {
     return (
-      <div className="bg-slate-900/30 rounded-lg border border-slate-800/50 p-6 text-center">
+      <div className="bg-slate-100 dark:bg-slate-900/30 rounded-lg border border-slate-200 dark:border-slate-800/50 p-6 text-center">
         <XCircle size={32} className="text-red-400 mx-auto mb-3" />
         <p className="text-sm text-red-400 mb-3">{error}</p>
         <button
           onClick={() => loadStats()}
-          className="text-sm text-blue-400 hover:underline"
+          className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
         >
           Tentar novamente
         </button>
@@ -130,15 +130,15 @@ export default function AnalyticsDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-slate-900/30 rounded-lg border border-slate-800/50 p-4">
+      <div className="bg-slate-100 dark:bg-slate-900/30 rounded-lg border border-slate-200 dark:border-slate-800/50 p-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <h3 className="font-semibold text-slate-100">Warehouse</h3>
+            <h3 className="font-semibold text-slate-900 dark:text-slate-100">Warehouse</h3>
           </div>
           <button
             onClick={() => loadStats(true, true)}
             disabled={refreshing}
-            className="p-1.5 text-slate-400 hover:text-slate-200 transition-colors rounded"
+            className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors rounded"
           >
             <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
           </button>
@@ -148,12 +148,12 @@ export default function AnalyticsDashboard() {
           {warehouseStats.map(({ label, value }) => (
             <div
               key={label}
-              className="bg-slate-800/40 rounded-lg p-3 flex flex-col"
+              className="bg-white dark:bg-slate-800/40 rounded-lg p-3 flex flex-col"
             >
-              <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+              <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mb-1">
                 {label}
               </div>
-              <span className="text-2xl font-bold text-slate-100">
+              <span className="text-2xl font-bold text-slate-900 dark:text-slate-100">
                 {value.toLocaleString()}
               </span>
             </div>
@@ -161,9 +161,9 @@ export default function AnalyticsDashboard() {
         </div>
       </div>
 
-      <div className="bg-slate-900/30 rounded-lg border border-slate-800/50 p-4">
+      <div className="bg-slate-100 dark:bg-slate-900/30 rounded-lg border border-slate-200 dark:border-slate-800/50 p-4">
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="font-semibold text-slate-100">Pipeline Health</h3>
+          <h3 className="font-semibold text-slate-900 dark:text-slate-100">Pipeline Health</h3>
         </div>
 
         <div className="space-y-4">
@@ -174,28 +174,28 @@ export default function AnalyticsDashboard() {
         </div>
       </div>
 
-      <div className="bg-slate-900/30 rounded-lg border border-slate-800/50 p-4">
+      <div className="bg-slate-100 dark:bg-slate-900/30 rounded-lg border border-slate-200 dark:border-slate-800/50 p-4">
         <div className="flex items-center gap-2 mb-3">
-          <h3 className="font-semibold text-slate-100">Performance</h3>
+          <h3 className="font-semibold text-slate-900 dark:text-slate-100">Performance</h3>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {(["fetch", "enrich", "rank", "mix"] as const).map((step) => (
             <div
               key={step}
-              className="bg-slate-800/40 rounded-lg p-3 text-center"
+              className="bg-white dark:bg-slate-800/40 rounded-lg p-3 text-center"
             >
-              <div className="text-xs text-slate-400 capitalize mb-1">{step}</div>
-              <span className="text-lg font-semibold text-slate-100">
+              <div className="text-xs text-slate-500 dark:text-slate-400 capitalize mb-1">{step}</div>
+              <span className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                 {processing[step].avgDuration}
-                <span className="text-xs text-slate-500 ml-0.5">ms</span>
+                <span className="text-xs text-slate-500 dark:text-slate-500 ml-0.5">ms</span>
               </span>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="text-center text-xs text-slate-500">
+      <div className="text-center text-xs text-slate-500 dark:text-slate-500">
         Atualizado em {new Date(generatedAt).toLocaleString("pt-BR")}
       </div>
     </div>

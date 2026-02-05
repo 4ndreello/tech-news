@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { ViewMode, SourceStatus } from "../types";
 import ServiceStatusWidget from "./ServiceStatus";
-import { Menu, X } from "lucide-react";
+import { Home, LayoutDashboard, Sun, Moon, HelpCircle } from "lucide-react";
+import { useTheme } from "../hooks/useTheme";
 
 interface HeaderProps {
   currentView: ViewMode;
@@ -9,6 +10,7 @@ interface HeaderProps {
   feedSources?: SourceStatus[];
   showDashboard?: boolean;
   onDashboardClick?: () => void;
+  onHelpClick?: () => void;
 }
 
 export default function Header({
@@ -17,29 +19,61 @@ export default function Header({
   feedSources,
   showDashboard = false,
   onDashboardClick,
+  onHelpClick,
 }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
   const navItems = [
     { id: "mix", label: "Home" },
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-[#0f172a] border-b border-slate-800/50">
+    <header className="sticky top-0 z-50 w-full bg-white dark:bg-[#0f172a] border-b border-slate-200 dark:border-slate-800/50">
       <div className="max-w-3xl mx-auto px-4 md:px-6 h-14 flex items-center justify-between">
-        {/* Brand */}
-        <div className="flex flex-col">
-          <span className="text-lg font-semibold text-white -mb-1">
-            TechNews
-          </span>
-          <span className="text-xs text-slate-500 pl-px">
-            Versão: {import.meta.env.VITE_VERSION}
-          </span>
+        {/* Brand + Action Buttons */}
+        <div className="flex items-center gap-3">
+          <div className="flex flex-col">
+            <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight leading-tight">
+              TechNews
+            </span>
+            <span className="text-[10px] text-slate-400 dark:text-slate-500 leading-none">
+              v{import.meta.env.VITE_VERSION}
+            </span>
+          </div>
+          
+          {/* Action Buttons + Status Widget - always visible on all screens */}
+          <div className="flex items-center gap-1">
+            <button
+              onClick={onHelpClick}
+              className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors"
+              title="Atalhos de teclado (?)"
+              aria-label="Mostrar atalhos de teclado"
+            >
+              <HelpCircle className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+            </button>
+
+            <button
+              onClick={toggleTheme}
+              className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors"
+              title="Alternar tema claro/escuro"
+              aria-label="Alternar tema"
+            >
+              {theme === 'dark' ? (
+                <Sun className="w-4 h-4 text-slate-400" />
+              ) : (
+                <Moon className="w-4 h-4 text-slate-500" />
+              )}
+            </button>
+
+            {/* Service Status Widget */}
+            <ServiceStatusWidget feedSources={feedSources} />
+          </div>
         </div>
 
-        {/* Navigation / Mobile Menu Toggle */}
-        <div className="flex items-center">
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-8 ml-8">
+        {/* Navigation */}
+        <div className="flex items-center gap-4">
+          {/* Desktop Navigation - Text */}
+          <nav className="hidden md:flex items-center gap-8">
             {navItems.map((item) => {
               const isActive = currentView === item.id && !showDashboard;
 
@@ -50,8 +84,8 @@ export default function Header({
                   className={`
                     text-sm font-medium transition-colors
                     ${isActive
-                      ? "text-white"
-                      : "text-slate-500 hover:text-slate-300"
+                      ? "text-slate-900 dark:text-white"
+                      : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                     }
                   `}
                 >
@@ -60,15 +94,15 @@ export default function Header({
               );
             })}
 
-            <div className="w-px h-4 bg-slate-700" />
+            <div className="w-px h-4 bg-slate-300 dark:bg-slate-700" />
 
             <button
               onClick={onDashboardClick}
               className={`
                 flex items-center gap-1.5 text-sm font-medium transition-colors
                 ${showDashboard
-                  ? "text-white"
-                  : "text-slate-500 hover:text-slate-300"
+                  ? "text-slate-900 dark:text-white"
+                  : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                 }
               `}
             >
@@ -76,73 +110,39 @@ export default function Header({
             </button>
           </nav>
 
-          {/* Mobile Menu Button */}
-          <button
-            className="md:hidden text-white p-2 rounded-md hover:bg-slate-800 transition-colors"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-
-          {/* Service Status Widget */}
-          <div className="ml-4 hidden md:block">
-            <ServiceStatusWidget feedSources={feedSources} />
-          </div>
-        </div>
-
-        {/* Mobile Menu Drawer (Conditionally rendered) */}
-        {isMenuOpen && (
-          <div
-            className="fixed inset-0 top-[56px] bg-black/50 z-40 md:hidden"
-            onClick={() => setIsMenuOpen(false)}
-          >
-            <div
-              className="bg-[#0f172a] w-64 h-[calc(100vh-56px)] p-4 shadow-lg"
-              onClick={(e) => e.stopPropagation()}
+          {/* Mobile Navigation - Icons */}
+          <nav className="flex md:hidden items-center gap-2">
+            <button
+              onClick={() => onViewChange("mix")}
+              className={`
+                p-2 rounded-md transition-colors
+                ${currentView === "mix" && !showDashboard
+                  ? "bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white"
+                  : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                }
+              `}
+              title="Home"
+              aria-label="Home"
             >
-              <nav className="flex flex-col gap-4">
-                {navItems.map((item) => {
-                  const isActive = currentView === item.id && !showDashboard;
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => {
-                        onViewChange(item.id as ViewMode);
-                        setIsMenuOpen(false);
-                      }}
-                      className={`text-left p-2 rounded-lg transition-colors text-lg font-medium ${isActive
-                        ? "bg-slate-700 text-white"
-                        : "text-slate-300 hover:bg-slate-800"
-                        }`}
-                    >
-                      {item.label}
-                    </button>
-                  );
-                })}
+              <Home className="w-5 h-5" />
+            </button>
 
-                <div className="border-t border-slate-800/50 my-2" />
-
-                <button
-                  onClick={() => {
-                    onDashboardClick?.();
-                    setIsMenuOpen(false);
-                  }}
-                  className={`flex items-center gap-2 text-left p-2 rounded-lg transition-colors text-lg font-medium ${showDashboard
-                    ? "bg-slate-700 text-white"
-                    : "text-slate-300 hover:bg-slate-800"
-                    }`}
-                >
-                  Dashboard
-                </button>
-              </nav>
-
-              {/* Service Status in Mobile Menu */}
-              <div className="mt-6 pt-4 border-t border-slate-800/50">
-                <ServiceStatusWidget feedSources={feedSources} />
-              </div>
-            </div>
-          </div>
-        )}
+            <button
+              onClick={onDashboardClick}
+              className={`
+                p-2 rounded-md transition-colors
+                ${showDashboard
+                  ? "bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white"
+                  : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                }
+              `}
+              title="Dashboard"
+              aria-label="Dashboard"
+            >
+              <LayoutDashboard className="w-5 h-5" />
+            </button>
+          </nav>
+        </div>
       </div>
     </header>
   );

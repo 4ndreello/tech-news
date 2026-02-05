@@ -13,6 +13,8 @@ import NewsCard from "./components/NewsCard";
 import RankingInfoModal from "./components/RankingInfoModal";
 import SearchBar from "./components/SearchBar";
 import SkeletonCard from "./components/SkeletonCard";
+import Toast from "./components/Toast";
+import KeyboardShortcutsHelp from "./components/KeyboardShortcutsHelp";
 import {
   fetchFeed
 } from "./services/api";
@@ -22,6 +24,10 @@ import {
   SourceStatus,
   ViewMode
 } from "./types";
+import { classifyError, ErrorType } from "./utils/errorHandler";
+import { useToast } from "./hooks/useToast";
+import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
+import { useSEO } from "./hooks/useSEO";
 
 export default function App() {
   const [view, setView] = useState<ViewMode>("mix");
@@ -33,12 +39,34 @@ export default function App() {
   const [feedSources, setFeedSources] = useState<SourceStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [errorType, setErrorType] = useState<ErrorType | null>(null);
   const [selectedItem, setSelectedItem] = useState<NewsItem | null>(null);
   const [rankingInfoItem, setRankingInfoItem] = useState<NewsItem | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [showDashboard, setShowDashboard] = useState(false);
+  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const lastItemRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Calculate skeleton count based on viewport height
+  const [skeletonCount] = useState(() => {
+    const viewportHeight = window.innerHeight;
+    const estimatedCardHeight = 80;
+    const count = Math.floor(viewportHeight / estimatedCardHeight);
+    return Math.max(3, Math.min(count, 20)); // Min 3, max 20
+  });
+
+  // Toast notifications
+  const { toasts, showToast, removeToast } = useToast();
+
+  // SEO
+  useSEO({
+    title: 'TechNews - Notícias de Tecnologia em Tempo Real',
+    description:
+      'Agregador de notícias de tecnologia do Hacker News, TabNews, Dev.to, Lobsters e Twitter. Fique por dentro das últimas novidades em programação, desenvolvimento web e tecnologia.',
+  });
 
 
 
@@ -98,11 +126,10 @@ export default function App() {
         }
       } catch (err) {
         if (!ignore) {
-          const errorMessage =
-            err instanceof Error
-              ? err.message
-              : "Não foi possível conectar ao servidor.";
-          setError(errorMessage);
+          const error = err instanceof Error ? err : new Error("Não foi possível conectar ao servidor.");
+          const type = classifyError(error);
+          setErrorType(type);
+          setError(error.message);
           setItems([]); // Clear items on error
           setMixNextCursor(null);
           setHasMoreMixItems(false);
@@ -213,6 +240,8 @@ export default function App() {
   }, [hasMoreMixItems, loadingMoreMixItems, loadMoreMixItems, view]);
 
   const handleRefresh = () => {
+    setError(null);
+    setErrorType(null);
     setRefreshTrigger((prev) => prev + 1);
   };
 
@@ -268,6 +297,40 @@ export default function App() {
     return filteredItems;
   }, [filteredItems]);
 
+  // Keyboard shortcuts
+  const handleOpenSelectedItem = useCallback(() => {
+    const item = itemsWithHighlights[selectedIndex];
+    if (item) {
+      if ('type' in item && item.type === 'news') {
+        const newsItem = item as NewsItem & { type: 'news' };
+        const mainLink =
+          newsItem.url ||
+          (newsItem.source === 'TabNews'
+            ? `https://www.tabnews.com.br/${newsItem.owner_username}/${newsItem.slug}`
+            : `https://news.ycombinator.com/item?id=${newsItem.id}`);
+        window.open(mainLink, '_blank');
+      } else {
+        const newsItem = item as NewsItem;
+        const mainLink =
+          newsItem.url ||
+          (newsItem.source === 'TabNews'
+            ? `https://www.tabnews.com.br/${newsItem.owner_username}/${newsItem.slug}`
+            : `https://news.ycombinator.com/item?id=${newsItem.id}`);
+        window.open(mainLink, '_blank');
+      }
+    }
+  }, [itemsWithHighlights, selectedIndex]);
+
+  useKeyboardShortcuts({
+    itemsCount: itemsWithHighlights.length,
+    selectedIndex,
+    onSelectIndex: setSelectedIndex,
+    onOpenItem: handleOpenSelectedItem,
+    onShowHelp: () => setShowKeyboardHelp(true),
+    searchInputRef,
+    enabled: !showKeyboardHelp && !selectedItem && !rankingInfoItem,
+  });
+
   // Find the last news item index for attaching the infinite scroll ref
   // (highlights don't need ref, only news items trigger loading)
   const lastNewsIndex = useMemo(() => {
@@ -283,7 +346,7 @@ export default function App() {
   }, [itemsWithHighlights, view]);
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-slate-200 font-sans selection:bg-blue-500/30 flex flex-col">
+    <div className="min-h-screen bg-white dark:bg-[#0f172a] text-slate-900 dark:text-slate-200 font-sans selection:bg-blue-500/30 flex flex-col">
       <Header
         currentView={view}
         onViewChange={(v) => {
@@ -294,6 +357,7 @@ export default function App() {
         feedSources={view === "mix" ? feedSources : undefined}
         showDashboard={showDashboard}
         onDashboardClick={() => setShowDashboard(!showDashboard)}
+        onHelpClick={() => setShowKeyboardHelp(true)}
       />
 
       <div className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6">
@@ -304,6 +368,7 @@ export default function App() {
               !showDashboard &&
               (view === "mix" ? feedItems.length > 0 : items.length > 0) && (
                 <SearchBar
+                  ref={searchInputRef}
                   value={searchQuery}
                   onChange={setSearchQuery}
                   placeholder="Buscar por título, autor ou conteúdo..."
@@ -313,10 +378,14 @@ export default function App() {
             {showDashboard ? (
               <AnalyticsDashboard />
             ) : error ? (
-              <ErrorState message={error} onRetry={handleRefresh} />
+              <ErrorState
+                message={error}
+                errorType={errorType || ErrorType.Unknown}
+                onRetry={handleRefresh}
+              />
             ) : loading ? (
               <div className="space-y-0">
-                {Array.from({ length: 10 }).map((_, i) => (
+                {Array.from({ length: skeletonCount }).map((_, i) => (
                   <SkeletonCard key={`skeleton-${i}`} />
                 ))}
               </div>
@@ -336,6 +405,10 @@ export default function App() {
                             item={item}
                             onClick={setSelectedItem}
                             onScoreClick={handleScoreClick}
+                            onCopyLink={(url) => showToast('Link copiado!', 'success')}
+                            isSelected={index === selectedIndex}
+                            selectedIndex={selectedIndex}
+                            itemIndex={index}
                           />
                         </div>
                       );
@@ -351,6 +424,10 @@ export default function App() {
                         item={item as NewsItem}
                         onClick={setSelectedItem}
                         onScoreClick={handleScoreClick}
+                        onCopyLink={(url) => showToast('Link copiado!', 'success')}
+                        isSelected={index === selectedIndex}
+                        selectedIndex={selectedIndex}
+                        itemIndex={index}
                       />
                     </div>
                   );
@@ -398,6 +475,24 @@ export default function App() {
           onClose={handleCloseRankingModal}
         />
       )}
+
+      {/* Toast container */}
+      <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+        {toasts.map(toast => (
+          <Toast
+            key={toast.id}
+            message={toast.message}
+            type={toast.type}
+            onClose={() => removeToast(toast.id)}
+          />
+        ))}
+      </div>
+
+      {/* Keyboard Shortcuts Help Modal */}
+      <KeyboardShortcutsHelp
+        isOpen={showKeyboardHelp}
+        onClose={() => setShowKeyboardHelp(false)}
+      />
     </div>
   );
 }
