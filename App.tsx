@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AnalyticsDashboard from "./components/AnalyticsDashboard";
 import ErrorState from "./components/ErrorState";
 import Header from "./components/Header";
-import Modal from "./components/Modal";
 import NewsCard from "./components/NewsCard";
 import RankingInfoModal from "./components/RankingInfoModal";
 import SearchBar from "./components/SearchBar";
@@ -27,7 +26,6 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [errorType, setErrorType] = useState<ErrorType | null>(null);
-  const [selectedItem, setSelectedItem] = useState<NewsItem | null>(null);
   const [rankingInfoItem, setRankingInfoItem] = useState<NewsItem | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
@@ -315,7 +313,7 @@ export default function App() {
     onOpenItem: handleOpenSelectedItem,
     onShowHelp: () => setShowKeyboardHelp(true),
     searchInputRef,
-    enabled: !showKeyboardHelp && !selectedItem && !rankingInfoItem,
+    enabled: !showKeyboardHelp && !rankingInfoItem,
   });
 
   // Find the last news item index for attaching the infinite scroll ref
@@ -390,7 +388,6 @@ export default function App() {
                         >
                           <NewsCard
                             item={item}
-                            onClick={setSelectedItem}
                             onScoreClick={handleScoreClick}
                             onCopyLink={(url) =>
                               showToast("Link copiado!", "success")
@@ -411,7 +408,6 @@ export default function App() {
                     >
                       <NewsCard
                         item={item as NewsItem}
-                        onClick={setSelectedItem}
                         onScoreClick={handleScoreClick}
                         onCopyLink={(url) =>
                           showToast("Link copiado!", "success")
@@ -453,12 +449,6 @@ export default function App() {
           </main>
         </div>
       </div>
-
-      <Modal
-        isOpen={!!selectedItem}
-        onClose={() => setSelectedItem(null)}
-        item={selectedItem}
-      />
 
       {rankingInfoItem && (
         <RankingInfoModal

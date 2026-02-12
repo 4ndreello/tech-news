@@ -16,16 +16,6 @@ export interface NewsResponse {
   nextCursor: string | null;
 }
 
-export interface Comment {
-  id: string;
-  parent_id: string | null;
-  owner_username: string;
-  body: string;
-  created_at: string;
-  children: Comment[];
-  tabcoins?: number;
-}
-
 export interface NewsItem {
   id: string;
   title: string;
@@ -34,6 +24,7 @@ export interface NewsItem {
   publishedAt: string; // ISO String
   source: Source;
   url?: string; // External URL for HN
+  commentsUrl: string; // Comments/discussion URL for the item
   sourceUrl?: string | null; // External URL for TabNews (if link post)
   slug?: string; // TabNews slug
   owner_username?: string; // TabNews owner

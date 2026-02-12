@@ -1,6 +1,4 @@
 import {
-  NewsItem,
-  Comment,
   ServicesStatusResponse,
   FeedResponse,
   AnalyticsStatsResponse,
@@ -50,38 +48,6 @@ const invalidateCache = (key: string): void => {
 
 
 
-export const fetchTabNewsComments = async (
-  username: string,
-  slug: string,
-): Promise<Comment[]> => {
-  const cacheKey = `comments-${username}-${slug}`;
-
-  const cached = getCachedData<Comment[]>(cacheKey);
-  if (cached) return cached;
-
-  const inflight = inflightRequests.get(cacheKey);
-  if (inflight) return inflight;
-
-  const request = (async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/comments/${username}/${slug}`);
-      if (!res.ok) {
-        const error = await res
-          .json()
-          .catch(() => ({ error: "Falha ao carregar comentários" }));
-        throw new Error(error.error || "Falha ao carregar comentários");
-      }
-      const data = await res.json();
-      setCachedData(cacheKey, data);
-      return data;
-    } finally {
-      inflightRequests.delete(cacheKey);
-    }
-  })();
-
-  inflightRequests.set(cacheKey, request);
-  return request;
-};
 export const fetchServiceStatus = async (): Promise<ServicesStatusResponse> => {
   const cacheKey = "service-status";
 
