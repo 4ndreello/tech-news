@@ -10,7 +10,6 @@ type NewsItemWithEnrichment = NewsItem & Partial<Pick<EnrichedNewsItem, "techSco
 
 interface NewsCardProps {
   item: NewsItemWithEnrichment;
-  onClick: (item: NewsItem) => void;
   onScoreClick: (item: NewsItem) => void;
   onCopyLink?: (url: string) => void;
   isSelected?: boolean;
@@ -18,7 +17,14 @@ interface NewsCardProps {
   itemIndex?: number;
 }
 
-const sourceConfig: Record<Source, any> = {
+type SourceConfig = {
+  name: string;
+  badgeStyles: string;
+  getMainLink: (item: NewsItem) => string;
+  getUserUrl: (author: string) => string;
+};
+
+const sourceConfig: Record<Source, SourceConfig> = {
   [Source.HackerNews]: {
     name: "HACKERNEWS",
     badgeStyles: "bg-orange-500/10 text-orange-400",
@@ -26,8 +32,6 @@ const sourceConfig: Record<Source, any> = {
       item.url || `https://news.ycombinator.com/item?id=${item.id}`,
     getUserUrl: (author: string) =>
       `https://news.ycombinator.com/user?id=${author}`,
-    canOpenModal: false,
-    commentActionTitle: "Abrir discussão",
   },
   [Source.TabNews]: {
     name: "TABNEWS",
@@ -35,38 +39,29 @@ const sourceConfig: Record<Source, any> = {
     getMainLink: (item: NewsItem) =>
       `https://www.tabnews.com.br/${item.owner_username}/${item.slug}`,
     getUserUrl: (author: string) => `https://www.tabnews.com.br/${author}`,
-    canOpenModal: true,
-    commentActionTitle: "Ler comentários",
   },
   [Source.DevTo]: {
     name: "DEVTO",
     badgeStyles: "bg-purple-500/10 text-purple-400",
     getMainLink: (item: NewsItem) => item.url!,
     getUserUrl: (author: string) => `https://dev.to/${author}`,
-    canOpenModal: false,
-    commentActionTitle: "Ver no Dev.to",
   },
   [Source.Lobsters]: {
     name: "LOBSTERS",
     badgeStyles: "bg-[#500500]/30 text-[#fff]",
     getMainLink: (item: NewsItem) => item.url!,
     getUserUrl: (author: string) => `https://lobsters.org/user/${author}`,
-    canOpenModal: false,
-    commentActionTitle: "Ver no Lobsters",
   },
   [Source.Twitter]: {
     name: "TWITTER",
     badgeStyles: "bg-black text-white border border-slate-700",
     getMainLink: (item: NewsItem) => item.url!,
     getUserUrl: (author: string) => `https://twitter.com/${author}`,
-    canOpenModal: false,
-    commentActionTitle: "Ver no Twitter",
   },
 };
 
 export default function NewsCard({
   item,
-  onClick,
   onScoreClick,
   onCopyLink,
   isSelected = false,
@@ -118,10 +113,7 @@ export default function NewsCard({
     e.preventDefault();
     e.stopPropagation();
 
-    if (config.canOpenModal) {
-      onClick(item);
-    }
-    // For other sources, the button is disabled, so no action is needed.
+    window.open(item.commentsUrl, "_blank", "noopener,noreferrer");
   };
 
   const handleCopyLink = async (e: React.MouseEvent) => {
@@ -202,15 +194,11 @@ export default function NewsCard({
               <span title={formatFullDate(item.publishedAt)}>
                 {timeAgo(item.publishedAt)}
               </span>
-              <button
-                onClick={handleCommentClick}
-                className={`flex items-center gap-1.5 transition-colors ${
-                  !config.canOpenModal
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:text-slate-700 dark:hover:text-slate-400"
-                }`}
-                title={config.commentActionTitle}
-              >
+                <button
+                  onClick={handleCommentClick}
+                  className="flex items-center gap-1.5 transition-colors hover:text-slate-700 dark:hover:text-slate-400"
+                  title="Abrir comentários"
+                >
                 <MessageCircle size={14} />
                 <span>{item.commentCount || 0}</span>
               </button>
