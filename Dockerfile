@@ -10,10 +10,7 @@ COPY package*.json ./
 RUN npm ci
 
 # Copia o restante dos arquivos
-COPY . .
-
-# Copia .env.production para .env
-RUN cp .env.production .env
+COPY . 
 
 # Insere a versão do commit no .env
 RUN apk add --no-cache git && \
