@@ -70,13 +70,7 @@ export default function App() {
         switch (view) {
           case "mix":
             setLoadingMoreMixItems(true);
-            console.log("[Initial Load] Buscando primeira página do feed...");
-            const feedResponse = await fetchFeed(10); // Fetch first page with 10 items (includes news + highlights)
-            console.log("[Initial Load] Feed carregado:", {
-              itens: feedResponse.items.length,
-              proximoCursor: feedResponse.nextCursor,
-              temMais: !!feedResponse.nextCursor,
-            });
+            const feedResponse = await fetchFeed(10);
             setFeedItems(feedResponse.items);
             setFeedSources(feedResponse.sources || []);
             newMixNextCursor = feedResponse.nextCursor;
@@ -138,28 +132,12 @@ export default function App() {
 
   const loadMoreMixItems = useCallback(async () => {
     if (!hasMoreMixItems || loadingMoreMixItems || view !== "mix") {
-      console.log("[Infinite Scroll] Bloqueado:", {
-        hasMoreMixItems,
-        loadingMoreMixItems,
-        view,
-      });
       return;
     }
-
-    console.log("[Infinite Scroll] Carregando mais itens do feed...", {
-      cursorAtual: mixNextCursor,
-      totalItensAtuais: feedItems.length,
-    });
 
     setLoadingMoreMixItems(true);
     try {
       const response = await fetchFeed(10, mixNextCursor!);
-      console.log("[Infinite Scroll] Resposta recebida:", {
-        novosItens: response.items.length,
-        proximoCursor: response.nextCursor,
-        temMais: !!response.nextCursor,
-      });
-
       setFeedItems((prev) => {
         const existingKeys = new Set(prev.map((i) => i.id));
         const newUniqueItems = response.items.filter(
@@ -170,12 +148,8 @@ export default function App() {
       setMixNextCursor(response.nextCursor);
       setHasMoreMixItems(!!response.nextCursor);
 
-      if (!response.nextCursor) {
-        console.log("[Infinite Scroll] ✅ Chegou ao FINAL - sem mais itens!");
-      }
     } catch (err) {
-      console.error("[Infinite Scroll] ❌ Erro ao carregar:", err);
-      setHasMoreMixItems(false);
+      // keep hasMoreMixItems true so observer can retry on next intersection
     } finally {
       setLoadingMoreMixItems(false);
     }
@@ -191,16 +165,9 @@ export default function App() {
   useEffect(() => {
     if (!hasMoreMixItems || loadingMoreMixItems || view !== "mix") return;
 
-    console.log(
-      "[Intersection Observer] Configurando observer para último item",
-    );
-
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
-          console.log(
-            "[Intersection Observer] Último item visível - trigger loadMore",
-          );
           loadMoreMixItems();
         }
       },
@@ -209,12 +176,7 @@ export default function App() {
 
     const currentRef = lastItemRef.current;
     if (currentRef) {
-      console.log("[Intersection Observer] Observer anexado ao último item");
       observer.observe(currentRef);
-    } else {
-      console.warn(
-        "[Intersection Observer] ⚠️ Referência ao último item não encontrada!",
-      );
     }
 
     return () => {
