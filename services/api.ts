@@ -6,7 +6,6 @@ import {
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || "http://localhost:8080/api";
-console.log(API_BASE_URL);
 const CACHE_DURATION = 3 * 60 * 1000; // 3 minutos em ms
 
 interface CacheEntry<T> {
