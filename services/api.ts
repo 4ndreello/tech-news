@@ -60,7 +60,7 @@ export const fetchServiceStatus = async (): Promise<ServicesStatusResponse> => {
     try {
       const res = await fetch(`${API_BASE_URL}/services/status`);
       if (!res.ok) {
-        throw new Error("Falha ao carregar status dos serviços");
+        throw new Error(`HTTP ${res.status}: Falha ao carregar status dos serviços`);
       }
       const data = await res.json();
       setCachedData(cacheKey, data);
@@ -97,7 +97,7 @@ export const fetchFeed = async (
         const error = await res
           .json()
           .catch(() => ({ error: "Falha ao carregar feed" }));
-        throw new Error(error.error || "Falha ao carregar feed");
+        throw new Error(`HTTP ${res.status}: ${error.error || "Falha ao carregar feed"}`);
       }
       const data = await res.json();
       setCachedData(cacheKey, data);
@@ -139,7 +139,7 @@ export const fetchAnalyticsStats = async (
         const error = await res
           .json()
           .catch(() => ({ error: "Falha ao carregar analytics" }));
-        throw new Error(error.error || "Falha ao carregar analytics");
+        throw new Error(`HTTP ${res.status}: ${error.error || "Falha ao carregar analytics"}`);
       }
       const data = await res.json();
       setCachedData(cacheKey, data);
