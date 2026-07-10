@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { ViewMode, SourceStatus } from "../types";
 import ServiceStatusWidget from "./ServiceStatus";
-import { Home, LayoutDashboard, Sun, Moon, HelpCircle } from "lucide-react";
-import { useTheme } from "../hooks/useTheme";
+import { Home, LayoutDashboard, HelpCircle } from "lucide-react";
 
 interface HeaderProps {
   currentView: ViewMode;
@@ -22,7 +21,6 @@ export default function Header({
   onHelpClick,
 }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { theme, toggleTheme } = useTheme();
   const navItems = [
     { id: "mix", label: "Home" },
   ];
@@ -50,19 +48,6 @@ export default function Header({
               aria-label="Mostrar atalhos de teclado"
             >
               <HelpCircle className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-            </button>
-
-            <button
-              onClick={toggleTheme}
-              className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors"
-              title="Alternar tema claro/escuro"
-              aria-label="Alternar tema"
-            >
-              {theme === 'dark' ? (
-                <Sun className="w-4 h-4 text-slate-400" />
-              ) : (
-                <Moon className="w-4 h-4 text-slate-500" />
-              )}
             </button>
 
             {/* Service Status Widget */}
