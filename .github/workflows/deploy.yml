@@ -1,0 +1,57 @@
+name: Deploy to R2
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-r2
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      # r2 rejects the checksums aws-cli v2 sends by default
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      R2_ENDPOINT: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+      BUCKET: ${{ secrets.R2_BUCKET_NAME }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # inject commit hash as build version (mirrors old Dockerfile;
+      # prod api url comes from committed .env.production)
+      - name: Inject version
+        run: echo "VERSION=${GITHUB_SHA::7}" >> .env
+
+      - run: npm run build
+
+      # hashed assets are content-addressed -> cache forever, immutable
+      - name: Upload hashed assets
+        run: |
+          aws s3 sync dist/ "s3://$BUCKET/" \
+            --endpoint-url "$R2_ENDPOINT" \
+            --exclude "*" --include "assets/*" \
+            --cache-control "public, max-age=31536000, immutable"
+
+      # everything else (index.html, robots, sitemap, favicon) must revalidate;
+      # --delete prunes removed root files (assets excluded, so old bundles linger harmlessly)
+      - name: Upload entrypoint files
+        run: |
+          aws s3 sync dist/ "s3://$BUCKET/" \
+            --endpoint-url "$R2_ENDPOINT" \
+            --exclude "assets/*" \
+            --cache-control "public, max-age=0, must-revalidate" \
+            --delete
